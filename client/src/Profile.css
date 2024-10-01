@@ -1,0 +1,249 @@
+/* Import Poppins font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+/* Body and background setup */
+body {
+  font-family: "Poppins", sans-serif;
+  background-color: #f9fafb;
+  margin: 0;
+  padding: 0;
+}
+
+/* Cover photo */
+.cover-photo {
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  margin-bottom: 20px; /* Spacing below the cover photo */
+}
+
+.cover-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Profile container to align all cards */
+.profile-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  gap: 20px; /* Gap between the cards */
+  padding: 20px;
+}
+
+/* Sidebar navbar */
+.navbar-card {
+  width: 20%;
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  height: 100%; /* Make all cards the same height */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Small shadow */
+  position: relative;
+}
+
+.sidebar ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.sidebar ul li {
+  margin: 20px 0;
+}
+
+.sidebar ul li a {
+  color: #401967;
+  text-decoration: none;
+  font-size: 18px;
+  padding: 10px 20px;
+  display: block;
+}
+
+.sidebar ul li a:hover {
+  background-color: #E5B340;
+  border-radius: 5px;
+}
+
+/* Profile description card (Edit Profile) */
+.profile-description-card {
+  width: 50%; 
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: left;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Small shadow */
+}
+
+.profile-description-card h2 {
+  font-size: 24px;
+  color: #401967;
+}
+
+/* Form section */
+.form-section {
+  margin-bottom: 20px;
+}
+
+.form-section h3 {
+  font-size: 18px;
+  color: #401967;
+  margin-bottom: 10px;
+}
+
+.form-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.form-group div {
+  flex: 1;
+}
+
+.full-width {
+  flex: 100%;
+}
+
+label {
+  font-size: 14px;
+  color: #666;
+  display: block;
+  margin-bottom: 5px;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+textarea {
+  height: 100px;
+  resize: none;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Right-side profile card */
+.profile-card {
+  width: 30%;
+  background-color: white;
+  border-radius: 12px;
+  padding-bottom: 20px;
+  text-align: center;
+  margin-bottom: 20px;
+  height: fit-content;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Small shadow */
+  position: relative;
+  overflow: hidden; /* Prevents overflow from cover photo */
+}
+
+/* Background cover photo section */
+.cover-photo {
+  width: 100%;
+  height: 180px; /* Adjust as needed */
+  object-fit: cover;
+}
+
+.cover-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Profile image */
+.profile-image-wrapper {
+  position: absolute;
+  top: 120px; /* Place it partly over the cover photo */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.profile-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid white;
+}
+
+/* Profile actions and stats */
+.profile-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 80px;
+}
+
+.btn-connect,
+.btn-message {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-connect {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.btn-message {
+  background-color: #343a40;
+  color: white;
+}
+
+.profile-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+.profile-stats div h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.profile-stats div p {
+  margin: 0;
+  font-size: 14px;
+  color: grey;
+}
+
+.profile-info {
+  margin-top: 20px;
+}
+
+.profile-info h2 {
+  font-size: 24px;
+  color: #401967;
+}
+
+.profile-info p {
+  font-size: 16px;
+  margin: 5px 0;
+  color: #333;
+}
+
+.profile-info i {
+  margin-right: 8px;
+}
+
+
+/* Icons */
+.location-icon::before {
+  content: '📍';
+}
+
+.job-icon::before {
+  content: '💼';
+}
+
+.education-icon::before {
+  content: '🎓';
+}

@@ -1,0 +1,16 @@
+.image-container {
+  border-radius:0.5rem;
+  position: relative;
+  width: 90%;   /* Set your desired width */
+  height: 200px;  /* Set your desired height */
+  background-color: #727272;  /* Set the desired background color */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.overlay-image {
+  width: 350px;   /* Set your desired width for the overlay image */
+  height: 350px;  /* Set your desired height for the overlay image */
+  object-fit: contain;
+}
