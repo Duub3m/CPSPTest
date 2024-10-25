@@ -1,175 +1,152 @@
+// App.js
 import logo from './logo.svg';
+import cpsp from './cpsp.png'
 import './App.css';
-import { RouterProvider, createBrowserRouter, useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import { useEffect, useRef, useState, createContext, useContext, useCallback } from 'react'
-
+import { RouterProvider, createBrowserRouter, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useEffect, useRef, useState, createContext, useContext, useCallback } from 'react';
 
 // Ensures cookie is sent
-axios.defaults.withCredentials = true
+axios.defaults.withCredentials = true;
 
-const serverUrl = process.env.REACT_APP_SERVER_URL
+const serverUrl = process.env.REACT_APP_SERVER_URL;
 
-const AuthContext = createContext()
+export const AuthContext = createContext(); // Explicitly export AuthContext
 
 const AuthContextProvider = ({ children }) => {
-  const [loggedIn, setLoggedIn] = useState(null)
-  const [user, setUser] = useState(null)
+  const [loggedIn, setLoggedIn] = useState(null);
+  const [user, setUser] = useState(null);
 
   const checkLoginState = useCallback(async () => {
     try {
-      const {
-        data: { loggedIn: logged_in, user },
-      } = await axios.get(`${serverUrl}/auth/logged_in`)
-      setLoggedIn(logged_in)
-      user && setUser(user)
+      const { data: { loggedIn: logged_in, user } } = await axios.get(`${serverUrl}/auth/logged_in`);
+      setLoggedIn(logged_in);
+      user && setUser(user);
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    checkLoginState()
-  }, [checkLoginState])
+    checkLoginState();
+  }, [checkLoginState]);
 
   return (
     <AuthContext.Provider value={{ loggedIn, checkLoginState, user }}>
       {children}
     </AuthContext.Provider>
-  )
-}
+  );
+};
 
 const Dashboard = () => {
-  const { user, loggedIn, checkLoginState } = useContext(AuthContext)
-  const [posts, setPosts] = useState([])
+  const { user, loggedIn, checkLoginState } = useContext(AuthContext);
+  const [posts, setPosts] = useState([]);
+
   useEffect(() => {
-    ;(async () => {
-      if (loggedIn === true) {
+    (async () => {
+      if (loggedIn) {
         try {
-          // Get posts from server
-          const {
-            data: { posts },
-          } = await axios.get(`${serverUrl}/user/posts`)
-          setPosts(posts)
+          const { data: { posts } } = await axios.get(`${serverUrl}/user/posts`);
+          setPosts(posts);
         } catch (err) {
-          console.error(err)
+          console.error(err);
         }
       }
-    })()
-  }, [loggedIn])
+    })();
+  }, [loggedIn]);
 
   const handleLogout = async () => {
     try {
-      await axios.post(`${serverUrl}/auth/logout`)
-      // Check login state again
-      checkLoginState()
+      await axios.post(`${serverUrl}/auth/logout`);
+      checkLoginState();
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
-  }
+  };
 
   return (
     <>
       <h3>Dashboard</h3>
-      <button className="btn" onClick={handleLogout}>
-        Logout
-      </button>
+      <button className="btn" onClick={handleLogout}>Logout</button>
       <h4>{user?.name}</h4>
-      <br />
       <p>{user?.email}</p>
-      <br />
       <img src={user?.picture} alt={user?.name} />
-      <br />
       <div>
         {posts.map((post, idx) => (
-          <div>
+          <div key={idx}>
             <h5>{post?.title}</h5>
             <p>{post?.body}</p>
           </div>
         ))}
       </div>
     </>
-  )
-}
+  );
+};
 
 const Login = () => {
   const handleLogin = async () => {
     try {
-      // Gets authentication url from backend server
-      const {
-        data: { url },
-      } = await axios.get(`${serverUrl}/auth/url`)
-      // Navigate to consent screen
-      window.location.assign(url)
+      const { data: { url } } = await axios.get(`${serverUrl}/auth/url`);
+      window.location.assign(url);
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
-  }
+  };
+
   return (
     <>
       <h3>Login to Dashboard</h3>
-      <button className="btn" onClick={handleLogin}>
-        Login
-      </button>
+      <button className="btn" onClick={handleLogin}>Login</button>
     </>
-  )
-}
+  );
+};
 
 const Callback = () => {
-  const called = useRef(false)
-  const { checkLoginState, loggedIn } = useContext(AuthContext)
-  const navigate = useNavigate()
+  const called = useRef(false);
+  const { checkLoginState, loggedIn } = useContext(AuthContext);
+  const navigate = useNavigate();
+
   useEffect(() => {
-    ;(async () => {
-      if (loggedIn === false) {
+    (async () => {
+      if (!loggedIn && !called.current) {
+        called.current = true;
         try {
-          if (called.current) return // prevent rerender caused by StrictMode
-          called.current = true
-          const res = await axios.get(`${serverUrl}/auth/token${window.location.search}`)
-          console.log('response: ', res)
-          checkLoginState()
-          navigate('/')
+          const res = await axios.get(`${serverUrl}/auth/token${window.location.search}`);
+          console.log('Token response:', res);
+          checkLoginState();
+          navigate('/');
         } catch (err) {
-          console.error(err)
-          navigate('/')
+          console.error(err);
+          navigate('/login');
         }
-      } else if (loggedIn === true) {
-        navigate('/')
       }
-    })()
-  }, [checkLoginState, loggedIn, navigate])
-  return <></>
-}
+    })();
+  }, [checkLoginState, loggedIn, navigate]);
+
+  return null;
+};
 
 const Home = () => {
-  const { loggedIn } = useContext(AuthContext)
-  if (loggedIn === true) return <Dashboard />
-  if (loggedIn === false) return <Login />
-  return <></>
-}
+  const { loggedIn } = useContext(AuthContext);
+  return loggedIn ? <Dashboard /> : <Login />;
+};
 
 const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Home />,
-  },
-  {
-    path: '/auth/callback', // google will redirect here
-    element: <Callback />,
-  },
-])
+  { path: '/', element: <Home /> },
+  { path: '/auth/callback', element: <Callback /> },
+]);
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
+        <img src={cpsp} className="App-logo" alt="logo" />
         <AuthContextProvider>
           <RouterProvider router={router} />
         </AuthContextProvider>
       </header>
     </div>
-  )
+  );
 }
 
 export default App;

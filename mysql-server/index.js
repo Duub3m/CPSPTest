@@ -26,7 +26,7 @@ connection.connect((err) => {
 
 //Route to fetch data from MySQL
 app.get('/api/dummydata', (req, res) => {
-  const sqlQuery = 'SELECT * FROM dummy_table'; // Replace this with your actual SQL query
+  const sqlQuery = 'SELECT * FROM dummy_table'; //SQL Query
   connection.query(sqlQuery, (err, results) => {
     if (err) {
       console.error('Error fetching data:', err);

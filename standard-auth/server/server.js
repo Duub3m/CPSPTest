@@ -91,7 +91,7 @@ app.get('/auth/token', async (req, res) => {
       maxAge: config.tokenExpiration,
       httpOnly: true,
     })
-    // You can choose to store user in a DB instead
+    // Note to self: You can store user in a DB instead
     res.json({
       user,
     })
