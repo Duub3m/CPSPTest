@@ -10,7 +10,7 @@ const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [totalHours, setTotalHours] = useState(0); // State for total hours
 
-  const serverUrl = process.env.REACT_APP_MYSQL_SERVER_URL;
+  const serverUrl = process.env.REACT_APP_SERVER_URL;
 
   const checkLoginState = useCallback(async () => {
     try {

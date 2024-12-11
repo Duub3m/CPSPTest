@@ -92,7 +92,7 @@ const Profile = () => {
         <div className="navbar-card">
           <nav className="sidebar">
             <ul>
-              <li><a href="#">Profile</a></li>
+              <li><Link to="/Profile2">Profile</Link></li>
               <li><a 
                     href="https://www.albany.edu/community-public-service-program/service-opportunities" 
                     target="_blank" 
@@ -101,6 +101,8 @@ const Profile = () => {
                 Volunteer Opportunities
               </a></li>
               {role === 'Volunteer' && <li><Link to="/add-hours">Add Hours</Link></li>}
+              {role === 'Volunteer' && <li><Link to="/VolunteerRequests">Requests</Link></li>}
+              {role === 'Supervisor' && <li><Link to="/Requests">Requests</Link></li>}
               <li><button className="btn-logout" onClick={handleLogout}>Logout</button></li>
             </ul>
           </nav>
@@ -144,29 +146,6 @@ const Profile = () => {
                 <textarea readOnly>{user?.about || 'No description provided.'}</textarea>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Right Profile Card */}
-        <div className="profile-card">
-          {/* Profile Image */}
-          <div className="profile-image-wrapper">
-            <img
-              className="profile-image"
-              src={user?.picture || 'https://example.com/default-profile.png'} // Use user's profile photo or fallback
-              alt={`${user?.first_name || 'User'}'s profile`}
-            />
-          </div>
-
-          {/* User Info */}
-          <div className="profile-info">
-            <h2>{`${user?.first_name || ''} ${user?.last_name || ''}`}</h2>
-            <p><i className="job-icon"></i> {role || 'N/A'}</p>
-            <p><i className="location-icon"></i> {user?.location || 'Location not set'}</p>
-            <p><i className="education-icon"></i> University at Albany</p>
-            {role === 'Volunteer' && (
-              <h3>Total Volunteering Hours: {totalHours}</h3>
-            )}
           </div>
         </div>
       </div>

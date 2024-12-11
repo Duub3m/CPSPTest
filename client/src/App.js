@@ -8,6 +8,9 @@ import AddHours from './AddHours';
 import Login from './Login'; 
 import Database from './Database'; 
 import Registration from './Registration';
+import Requests from './Requests';
+import VolunteerRequests from'./VolunteerRequests'
+import Profile2 from './Profile2'
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
@@ -17,6 +20,10 @@ const router = createBrowserRouter([
   { path: '/login', element: <Login /> }, 
   { path: '/database', element: <Database /> }, 
   { path: '/Registration', element: <Registration /> }, 
+  { path: '/Requests', element: <Requests /> }, 
+  { path: '/VolunteerRequests', element: <VolunteerRequests /> }, 
+  { path: '/Profile2', element: <Profile2 /> }, 
+
 ]);
 
 function App() {

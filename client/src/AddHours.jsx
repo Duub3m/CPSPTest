@@ -10,57 +10,57 @@ const AddHours = () => {
     activity: '',
   });
 
-  const [user, setUser] = useState(null); // State to store user data
   const [email, setEmail] = useState(null); // State for user email
+  const [supervisorEmail, setSupervisorEmail] = useState(null); // State for supervisor email
   const [loading, setLoading] = useState(true); // State for loading status
   const navigate = useNavigate();
 
-  // Fetch the signed-in user's email
+  // Fetch the signed-in user's email and their supervisor
   useEffect(() => {
-    const fetchLoggedInUser = async () => {
+    const fetchUserAndSupervisor = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/auth/logged_in`, {
-          credentials: 'include', // Ensure cookies are sent with the request
+        // Fetch logged-in user's email
+        const userResponse = await fetch(`${process.env.REACT_APP_SERVER_URL}/auth/logged_in`, {
+          credentials: 'include',
         });
-        const data = await response.json();
-        if (data.loggedIn) {
-          setEmail(data.user.email); // Set the email from the authenticated user
-        } else {
+        const userData = await userResponse.json();
+
+        if (!userData.loggedIn) {
           console.error('User not logged in');
+          return;
         }
-      } catch (error) {
-        console.error('Error fetching logged-in user:', error);
-      }
-    };
 
-    fetchLoggedInUser();
-  }, []);
+        setEmail(userData.user.email);
 
-  // Fetch user data once the email is available
-  useEffect(() => {
-    if (!email) return;
-
-    const fetchUserData = async () => {
-      try {
-        const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/volunteering-hours/email/${email}`);
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`);
+        // Fetch supervisor email for the volunteer
+        const supervisorResponse = await fetch(
+          `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisor/${userData.user.email}`
+        );
+        if (!supervisorResponse.ok) {
+          throw new Error('Failed to fetch supervisor email');
         }
-        const data = await response.json();
-        setUser(data);
+
+        const supervisorData = await supervisorResponse.json();
+        setSupervisorEmail(supervisorData.supervisor_email); // Automatically set supervisor email
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Error fetching user or supervisor information:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserData();
-  }, [email]);
+    fetchUserAndSupervisor();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  const formatDateToISO = (mmdd) => {
+    const [month, day] = mmdd.split('/');
+    const year = new Date().getFullYear();
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
   };
 
   const calculateHours = () => {
@@ -74,41 +74,53 @@ const AddHours = () => {
     e.preventDefault();
     const hours = calculateHours();
 
-    if (hours > 0 && user?.email) {
+    if (hours > 0 && email && supervisorEmail) {
       try {
-        // Make a POST request to add hours to the database
-        const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/volunteering-hours/email/${user.email}`, {
+        // Convert date to YYYY-MM-DD format
+        const formattedDate = formatDateToISO(formData.date);
+
+        // Make a POST request to submit the request for hours
+        const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/hours-requests`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ additional_hours: hours }),
+          body: JSON.stringify({
+            volunteer_email: email,
+            supervisor_email: supervisorEmail,
+            date: formattedDate,
+            from_time: formData.from,
+            to_time: formData.to,
+            activity: formData.activity,
+            hours,
+            status: 'Pending',
+          }),
         });
 
         if (!response.ok) {
-          throw new Error('Failed to add hours to the database');
+          throw new Error('Failed to submit hours request');
         }
 
-        const updatedData = await response.json();
-        alert(updatedData.message); // Display success message
+        const result = await response.json();
+        alert(result.message); // Display success message
         setFormData({ date: '', from: '', to: '', activity: '' }); // Reset form
         navigate('/profile'); // Redirect back to the profile page
       } catch (error) {
-        console.error('Error adding hours:', error);
-        alert('An error occurred while adding hours. Please try again.');
+        console.error('Error submitting hours request:', error);
+        alert('An error occurred while submitting the request. Please try again.');
       }
     } else {
-      alert('Invalid time range or user not logged in.');
+      alert('Invalid time range, user not logged in, or supervisor not found.');
     }
   };
 
   if (loading) {
-    return <p>Loading user information...</p>;
+    return <p>Loading user and supervisor information...</p>;
   }
 
   return (
     <div className="add-hours-container">
-      <h2>Add Volunteering Hours</h2>
+      <h2>Submit Hours Request</h2>
       <form onSubmit={handleSubmit} className="add-hours-form">
         <div>
           <label>Date</label>
@@ -151,7 +163,7 @@ const AddHours = () => {
             required
           />
         </div>
-        <button type="submit">Submit</button>
+        <button type="submit">Submit Request</button>
       </form>
     </div>
   );
