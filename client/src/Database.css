@@ -1,0 +1,42 @@
+.database-page {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  h1 {
+    text-align: center;
+  }
+  
+  .tables-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .table-container {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px;
+    background: #f9f9f9;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  th {
+    background: #eee;
+  }
+  
+  .error {
+    color: red;
+    text-align: center;
+  }
+  

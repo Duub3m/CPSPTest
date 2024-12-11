@@ -1,0 +1,220 @@
+/* Import Poppins font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
+/* Body and background setup */
+body {
+  font-family: "Poppins", sans-serif;
+  background-color: #f9fafb;
+  margin: 0;
+  padding: 0;
+}
+
+/* Cover photo */
+.cover-photo {
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  margin-bottom: 20px; /* Spacing below the cover photo */
+}
+
+.cover-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Profile container to align all cards */
+/* Profile container to align all cards */
+.profile-container {
+  display: flex;
+  justify-content: space-between; /* Ensure even spacing */
+  align-items: flex-start; /* Align items to the top */
+  gap: 20px; /* Gap between the cards */
+  padding: 20px;
+}
+
+/* Sidebar navbar */
+.navbar-card {
+  width: 20%;
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Small shadow */
+  position: relative;
+}
+
+.sidebar ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.sidebar ul li {
+  margin: 20px 0;
+}
+
+.sidebar ul li a {
+  color: #401967;
+  text-decoration: none;
+  font-size: 18px;
+  padding: 10px 20px;
+  display: block;
+}
+
+.sidebar ul li a:hover {
+  background-color: #E5B340;
+  border-radius: 5px;
+}
+
+/* Profile description card (Edit Profile) */
+.profile-description-card {
+  flex: 2; /* Take up more space compared to the profile card */
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: left;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Small shadow */
+}
+
+.profile-description-card h2 {
+  font-size: 24px;
+  color: #401967;
+}
+
+/* Form section */
+.form-section {
+  margin-bottom: 20px;
+}
+
+.form-section h3 {
+  font-size: 18px;
+  color: #401967;
+  margin-bottom: 10px;
+}
+
+.form-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.form-group div {
+  flex: 1;
+}
+
+.full-width {
+  flex: 100%;
+}
+
+label {
+  font-size: 14px;
+  color: #666;
+  display: block;
+  margin-bottom: 5px;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+textarea {
+  height: 100px;
+  resize: none;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Right-side profile card */
+.profile-card {
+  flex: 1; /* Take up less space compared to the profile description */
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Small shadow */
+  position: relative;
+  overflow: hidden; /* Prevents overflow from cover photo */
+}
+
+/* Background cover photo section */
+.cover-photo {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.cover-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Profile image */
+.profile-image-wrapper {
+  position: absolute;
+  top: 100px; /* Adjust placement above the card */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.profile-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid white;
+}
+
+/* Profile info */
+.profile-info {
+  margin-top: 160px; /* Push info below the image */
+}
+
+.profile-info h2 {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #401967;
+}
+
+.profile-info p {
+  font-size: 16px;
+  color: #333;
+  margin: 5px 0;
+}
+
+.profile-info i {
+  margin-right: 8px;
+}
+
+/* Icons */
+.location-icon::before {
+  content: '📍';
+}
+
+.job-icon::before {
+  content: '💼';
+}
+
+.education-icon::before {
+  content: '🎓';
+}
+
+/* Logout button */
+.btn-logout {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.btn-logout:hover {
+  background-color: #cc0000;
+}
