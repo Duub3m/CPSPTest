@@ -33,30 +33,74 @@ const Messaging = () => {
     fetchLoggedInUser();
   }, []);
 
-  // Fetch list of users to message (volunteers for supervisors, supervisors for volunteers)
-  useEffect(() => {
-    if (!user) return;
+// Fetch list of users to message (volunteers for supervisors, supervisors for volunteers, admins for all roles)
+useEffect(() => {
+  if (!user) return;
 
-    const fetchUsers = async () => {
-      try {
-        const endpoint =
-          user.role === 'Supervisor'
-            ? `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisor/volunteers/${user.email}`
-            : `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisors/by-volunteer/${user.email}`;
+  const fetchUsers = async () => {
+    try {
+      let data = [];
 
-        const response = await fetch(endpoint);
-        if (!response.ok) {
-          throw new Error('Failed to fetch users');
-        }
-        const data = await response.json();
-        setUsers(data);
-      } catch (error) {
-        console.error('Error fetching users:', error);
+      if (user.role === 'Supervisor') {
+        const fetchVolunteers = fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisor/volunteers/${user.email}`);
+        const fetchAdmins = fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/admins`);
+
+        const [volunteerResponse, adminResponse] = await Promise.all([fetchVolunteers, fetchAdmins]);
+
+        if (!volunteerResponse.ok || !adminResponse.ok) throw new Error('Failed to fetch users');
+
+        const volunteers = await volunteerResponse.json();
+        const admins = await adminResponse.json();
+
+        data = [...volunteers, ...admins];
+      } else if (user.role === 'Volunteer') {
+        const fetchSupervisors = fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisors/by-volunteer/${user.email}`);
+        const fetchAdmins = fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/admins`);
+
+        const [supervisorResponse, adminResponse] = await Promise.all([fetchSupervisors, fetchAdmins]);
+
+        if (!supervisorResponse.ok || !adminResponse.ok) throw new Error('Failed to fetch users');
+
+        const supervisors = await supervisorResponse.json();
+        const admins = await adminResponse.json();
+
+        data = [...supervisors, ...admins];
+      } else if (user.role === 'Admin') {
+        const fetchVolunteers = fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/volunteers`);
+        const fetchSupervisors = fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisors`);
+        const fetchAdmins = fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/admins`);
+
+        const [volunteerResponse, supervisorResponse, adminResponse] = await Promise.all([
+          fetchVolunteers,
+          fetchSupervisors,
+          fetchAdmins,
+        ]);
+
+        if (!volunteerResponse.ok || !supervisorResponse.ok || !adminResponse.ok) throw new Error('Failed to fetch users');
+
+        const volunteers = await volunteerResponse.json();
+        const supervisors = await supervisorResponse.json();
+        const admins = await adminResponse.json();
+
+        data = [...volunteers, ...supervisors, ...admins];
       }
-    };
 
-    fetchUsers();
-  }, [user]);
+      // Exclude the logged-in admin from the list of users
+      if (user.role === 'Admin') {
+        data = data.filter((u) => u.email !== user.email);
+      }
+
+      setUsers(data);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  fetchUsers();
+}, [user]);
+
+
+
 
   // Fetch messages between the sender and receiver
   useEffect(() => {

@@ -310,44 +310,74 @@ app.post('/api/hours-requests', (req, res) => {
   );
 });
 
-// Get user details by email (checks both Supervisors and Volunteers tables)
+// Get user details by email (checks Supervisors, Volunteers, and Admins tables)
 app.get('/api/user/email/:email', (req, res) => {
   const { email } = req.params;
 
-  // Check Supervisors table first
-  const supervisorQuery = `
-    SELECT first_name, last_name, email, 'Supervisor' as role 
-    FROM Supervisors WHERE email = ?;
+  // Check Admins table first
+  const adminQuery = `
+    SELECT first_name, last_name, email, 'Admin' as role 
+    FROM Admins WHERE email = ?;
   `;
 
-  connection.query(supervisorQuery, [email], (err, supervisorResults) => {
+  connection.query(adminQuery, [email], (err, adminResults) => {
     if (err) {
-      console.error('Error fetching supervisor data:', err.message);
+      console.error('Error fetching admin data:', err.message);
       return res.status(500).json({ message: 'Database query error' });
     }
 
-    if (supervisorResults.length > 0) {
-      return res.json({ user: supervisorResults[0], role: 'Supervisor' });
+    if (adminResults.length > 0) {
+      return res.json({ user: adminResults[0], role: 'Admin' });
     }
 
-    // If not in Supervisors, check Volunteers table
-    const volunteerQuery = `
-      SELECT first_name, last_name, email, total_hours, 'Volunteer' as role 
-      FROM Volunteers WHERE email = ?;
+    // If not in Admins, check Supervisors table
+    const supervisorQuery = `
+      SELECT first_name, last_name, email, 'Supervisor' as role 
+      FROM Supervisors WHERE email = ?;
     `;
 
-    connection.query(volunteerQuery, [email], (err, volunteerResults) => {
+    connection.query(supervisorQuery, [email], (err, supervisorResults) => {
       if (err) {
-        console.error('Error fetching volunteer data:', err.message);
+        console.error('Error fetching supervisor data:', err.message);
         return res.status(500).json({ message: 'Database query error' });
       }
 
-      if (volunteerResults.length === 0) {
-        return res.status(404).json({ message: 'User not found' });
+      if (supervisorResults.length > 0) {
+        return res.json({ user: supervisorResults[0], role: 'Supervisor' });
       }
 
-      res.json({ user: volunteerResults[0], role: 'Volunteer' });
+      // If not in Supervisors, check Volunteers table
+      const volunteerQuery = `
+        SELECT first_name, last_name, email, total_hours, 'Volunteer' as role 
+        FROM Volunteers WHERE email = ?;
+      `;
+
+      connection.query(volunteerQuery, [email], (err, volunteerResults) => {
+        if (err) {
+          console.error('Error fetching volunteer data:', err.message);
+          return res.status(500).json({ message: 'Database query error' });
+        }
+
+        if (volunteerResults.length > 0) {
+          return res.json({ user: volunteerResults[0], role: 'Volunteer' });
+        }
+
+        // If not found in any table
+        return res.status(404).json({ message: 'User not found' });
+      });
     });
+  });
+});
+
+//Get all Admins 
+app.get('/api/admins', (req, res) =>{
+  const sqlQuery = 'SELECT * From Admins';
+  connection.query(sqlQuery, (err, results) => {
+    if (err) {
+      console.error("Error fetching admins:", err.message);
+      return res.status(500).json({ message: 'Database query error'});
+    }
+    res.json(results);
   });
 });
 
@@ -357,6 +387,18 @@ app.get('/api/volunteers', (req, res) => {
   connection.query(sqlQuery, (err, results) => {
     if (err) {
       console.error('Error fetching volunteers:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+    res.json(results);
+  });
+});
+
+// Get all supervisors (for testing/debugging)
+app.get('/api/supervisors', (req, res) => {
+  const sqlQuery = 'SELECT * FROM Supervisors';
+  connection.query(sqlQuery, (err, results) => {
+    if (err) {
+      console.error('Error fetching supervisors:', err.message);
       return res.status(500).json({ message: 'Database query error' });
     }
     res.json(results);

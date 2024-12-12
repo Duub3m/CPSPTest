@@ -46,7 +46,7 @@ const Profile = () => {
         }
         const data = await response.json();
         setUser(data.user);
-        setRole(data.role); // Set the role (Supervisor or Volunteer)
+        setRole(data.role); // Set the role (Supervisor, Volunteer, Admin)
         if (data.role === 'Volunteer') {
           setTotalHours(data.user.total_hours || 0);
         }

@@ -106,15 +106,21 @@ app.get('/auth/token', async (req, res) => {
     // Check if user exists in either Volunteers or Supervisors table
 const [volunteerRows] = await db.query('SELECT * FROM Volunteers WHERE email = ?', [email]);
 const [supervisorRows] = await db.query('SELECT * FROM Supervisors WHERE email = ?', [email]);
+const [adminRows] = await db.query('SELECT * FROM Admins WHERE email = ?', [email]);
 
-if (volunteerRows.length === 0 && supervisorRows.length === 0) {
+
+if (volunteerRows.length === 0 && supervisorRows.length === 0 && adminRows.length ===0) {
   // If user is not found in both tables, return an error or handle appropriately
   throw new Error('User not found. Please register first.');
 }
 
 // Retrieve full user data from the appropriate table
-const user = volunteerRows[0] || supervisorRows[0];
-const userRole = volunteerRows.length > 0 ? 'Volunteer' : 'Supervisor';
+const user = volunteerRows[0] || supervisorRows[0] || adminRows[0];
+const userRole = volunteerRows.length > 0 
+  ? 'Volunteer' 
+  : supervisorRows.length > 0 
+    ? 'Supervisor' 
+    : 'Admin';
 
 
     // Generate JWT token
