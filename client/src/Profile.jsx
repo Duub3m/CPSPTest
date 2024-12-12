@@ -102,7 +102,10 @@ const Profile = () => {
               </a></li>
               {role === 'Volunteer' && <li><Link to="/add-hours">Add Hours</Link></li>}
               {role === 'Volunteer' && <li><Link to="/VolunteerRequests">Requests</Link></li>}
+              {role === 'Volunteer' && <li><Link to="/SupervisorList">Supervisor List</Link></li>}
               {role === 'Supervisor' && <li><Link to="/Requests">Requests</Link></li>}
+              {role === 'Supervisor' && <li><Link to="/VolunteerList">Volunteer List</Link></li>}
+              <li><Link to="/Messaging">Messages</Link></li>
               <li><button className="btn-logout" onClick={handleLogout}>Logout</button></li>
             </ul>
           </nav>

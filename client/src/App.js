@@ -11,6 +11,9 @@ import Registration from './Registration';
 import Requests from './Requests';
 import VolunteerRequests from'./VolunteerRequests'
 import Profile2 from './Profile2'
+import VolunteerList from './VolunteerList'
+import SupervisorList from './SupervisorList'
+import Messaging from './Messaging';
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
@@ -23,7 +26,9 @@ const router = createBrowserRouter([
   { path: '/Requests', element: <Requests /> }, 
   { path: '/VolunteerRequests', element: <VolunteerRequests /> }, 
   { path: '/Profile2', element: <Profile2 /> }, 
-
+  { path: '/VolunteerList', element: <VolunteerList /> }, 
+  { path: '/SupervisorList', element: <SupervisorList /> },
+  { path: '/Messaging', element: <Messaging /> },
 ]);
 
 function App() {

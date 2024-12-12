@@ -44,6 +44,99 @@ connection.connect((err) => {
 
 // Routes
 
+//Messaging
+// Add a new message
+app.post('/api/messages', (req, res) => {
+  const { sender_email, receiver_email, message } = req.body;
+
+  if (!sender_email || !receiver_email || !message) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  const sqlQuery = `
+    INSERT INTO Messages (sender_email, receiver_email, message)
+    VALUES (?, ?, ?);
+  `;
+
+  connection.query(sqlQuery, [sender_email, receiver_email, message], (err, results) => {
+    if (err) {
+      console.error('Error inserting message:', err.message);
+      return res.status(500).json({ message: 'Database insertion error' });
+    }
+
+    res.status(201).json({ message: 'Message sent successfully', id: results.insertId });
+  });
+});
+
+// Get all messages between two users
+app.get('/api/messages/:user1/:user2', (req, res) => {
+  const { user1, user2 } = req.params;
+
+  const sqlQuery = `
+    SELECT id, sender_email, receiver_email, message, created_at
+    FROM Messages
+    WHERE (sender_email = ? AND receiver_email = ?)
+       OR (sender_email = ? AND receiver_email = ?)
+    ORDER BY created_at ASC;
+  `;
+
+  connection.query(sqlQuery, [user1, user2, user2, user1], (err, results) => {
+    if (err) {
+      console.error('Error fetching messages:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    res.json(results);
+  });
+});
+
+// Delete a message 
+app.delete('/api/messages/:id', (req, res) => {
+  const { id } = req.params;
+
+  const sqlQuery = `
+    DELETE FROM Messages WHERE id = ?;
+  `;
+
+  connection.query(sqlQuery, [id], (err, results) => {
+    if (err) {
+      console.error('Error deleting message:', err.message);
+      return res.status(500).json({ message: 'Database deletion error' });
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+
+    res.json({ message: 'Message deleted successfully' });
+  });
+});
+
+// Get a list of volunteers associated with a specific supervisor
+app.get('/api/supervisor/volunteers/:supervisorEmail', (req, res) => {
+  const { supervisorEmail } = req.params;
+
+  const sqlQuery = `
+    SELECT v.first_name, v.last_name, v.email, v.total_hours
+    FROM SupervisorVolunteer sv
+    INNER JOIN Volunteers v ON sv.volunteer_email = v.email
+    WHERE sv.supervisor_email = ?;
+  `;
+
+  connection.query(sqlQuery, [supervisorEmail], (err, results) => {
+    if (err) {
+      console.error('Error fetching volunteers for supervisor:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'No volunteers found for this supervisor' });
+    }
+
+    res.json(results);
+  });
+});
+
 //fetch requests for a volunteer
 app.get('/api/requests/volunteer/:email', (req, res) => {
   const { email } = req.params;
@@ -174,7 +267,7 @@ app.get('/api/supervisors/by-volunteer/:volunteerEmail', (req, res) => {
   const sqlQuery = `
     SELECT sv.id, sv.supervisor_email, s.first_name AS supervisor_first_name, 
            s.last_name AS supervisor_last_name, sv.created_at
-    FROM SupervisorsVolunteer sv
+    FROM SupervisorVolunteer sv
     INNER JOIN Supervisors s ON sv.supervisor_email = s.email
     WHERE sv.volunteer_email = ?;
   `;

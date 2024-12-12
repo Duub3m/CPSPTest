@@ -1,0 +1,39 @@
+.volunteer-list-container {
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: 20px auto;
+  }
+  
+  .volunteer-list-container h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  .volunteer-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .volunteer-item {
+    background-color: #fff;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .volunteer-item p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .volunteer-item p strong {
+    color: #000;
+  }
+  

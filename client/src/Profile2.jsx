@@ -5,7 +5,6 @@ import { AuthContext } from './AuthContextProvider'; // Access AuthContext
 
 const Profile2 = () => {
   const { user, role, totalHours } = useContext(AuthContext); // Get user data from AuthContext
-
   return (
     <div className="profile-container">
       {/* Right Profile Card */}

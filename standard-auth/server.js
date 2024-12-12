@@ -103,19 +103,19 @@ app.get('/auth/token', async (req, res) => {
     const { email, name, picture } = jwt.decode(id_token);
     const [firstName, lastName] = name.split(' ');
 
-    // Check if user exists in the database
-    const [rows] = await db.query('SELECT * FROM Volunteers WHERE email = ?', [email]);
-    if (rows.length === 0) {
-      // Insert user if not found
-      await db.query(
-        'INSERT INTO Volunteers (first_name, last_name, email, total_hours) VALUES (?, ?, ?, ?)',
-        [firstName, lastName || '', email, 0]
-      );
-    }
+    // Check if user exists in either Volunteers or Supervisors table
+const [volunteerRows] = await db.query('SELECT * FROM Volunteers WHERE email = ?', [email]);
+const [supervisorRows] = await db.query('SELECT * FROM Supervisors WHERE email = ?', [email]);
 
-    // Retrieve full user data
-    const [userDetails] = await db.query('SELECT * FROM Volunteers WHERE email = ?', [email]);
-    const user = userDetails[0];
+if (volunteerRows.length === 0 && supervisorRows.length === 0) {
+  // If user is not found in both tables, return an error or handle appropriately
+  throw new Error('User not found. Please register first.');
+}
+
+// Retrieve full user data from the appropriate table
+const user = volunteerRows[0] || supervisorRows[0];
+const userRole = volunteerRows.length > 0 ? 'Volunteer' : 'Supervisor';
+
 
     // Generate JWT token
     const token = jwt.sign({ user }, config.tokenSecret, { expiresIn: config.tokenExpiration });
