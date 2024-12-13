@@ -7,7 +7,7 @@ const Layout = ({ role, handleLogout }) => {
     <div>
       <Navbar role={role} handleLogout={handleLogout} />
       <main className="main-content">
-        <Outlet /> {/* Placeholder for child components */}
+        <Outlet /> {/* Placeholder */}
       </main>
     </div>
   );

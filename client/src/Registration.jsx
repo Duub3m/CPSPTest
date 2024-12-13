@@ -38,8 +38,8 @@ const Registration = () => {
         if (userData.loggedIn) {
           setFormData((prev) => ({
             ...prev,
-            firstName: userData.user.firstName || "",
-            lastName: userData.user.lastName || "",
+            firstName: userData.user.first_name || "",
+            lastName: userData.user.last_name || "",
             personalEmail: userData.user.email || "",
           }));
         }
@@ -71,14 +71,16 @@ const Registration = () => {
     // Prepare data for API
     const payload = {
       volunteer_email: formData.personalEmail,
-      class_name: formData.course,
+      first_name: formData.firstName,
+      last_name: formData.lastName,
       semester: formData.semester,
       year: formData.year,
+      course_name: formData.course,
       organization: formData.organization,
     };
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/volunteer-classes`, {
+      const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/registration-requests`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -87,13 +89,13 @@ const Registration = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to register volunteer class.");
+        throw new Error("Failed to submit registration request.");
       }
 
-      alert("Registration successful!");
+      alert("Registration request submitted successfully!");
       navigate("/Profile"); // Redirect to the Profile page
     } catch (error) {
-      console.error("Error submitting registration:", error);
+      console.error("Error submitting registration request:", error);
       alert("An error occurred during registration. Please try again.");
     }
   };

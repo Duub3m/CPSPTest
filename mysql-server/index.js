@@ -44,6 +44,141 @@ connection.connect((err) => {
 
 // Routes
 
+// Routes for Registration Requests
+
+// Get count of pending registration requests for Admins
+app.get('/api/admin/requests/count', (req, res) => {
+  const sqlQuery = `
+    SELECT COUNT(*) AS pending_count
+    FROM RegistrationRequests
+    WHERE status = 'Pending';
+  `;
+
+  connection.query(sqlQuery, (err, results) => {
+    if (err) {
+      console.error('Error fetching pending registration requests count:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    res.json(results[0]);
+  });
+});
+
+
+// Create a new registration request
+app.post('/api/registration-requests', (req, res) => {
+  const { volunteer_email, first_name, last_name, semester, year, course_name, organization } = req.body;
+
+  if (!volunteer_email || !first_name || !last_name || !semester || !year || !course_name || !organization) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  const sqlQuery = `
+    INSERT INTO RegistrationRequests (volunteer_email, first_name, last_name, semester, year, course_name, organization)
+    VALUES (?, ?, ?, ?, ?, ?, ?);
+  `;
+
+  connection.query(
+    sqlQuery,
+    [volunteer_email, first_name, last_name, semester, year, course_name, organization],
+    (err, results) => {
+      if (err) {
+        console.error('Error inserting registration request:', err.message);
+        return res.status(500).json({ message: 'Database insertion error' });
+      }
+
+      res.status(201).json({ message: 'Registration request submitted successfully', id: results.insertId });
+    }
+  );
+});
+
+// Get all registration requests (Admin only)
+app.get('/api/registration-requests', (req, res) => {
+  const sqlQuery = `
+    SELECT * FROM RegistrationRequests ORDER BY created_at DESC;
+  `;
+
+  connection.query(sqlQuery, (err, results) => {
+    if (err) {
+      console.error('Error fetching registration requests:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    res.json(results);
+  });
+});
+
+// Approve or Reject a registration request (Admin only)
+app.put('/api/registration-requests/:id', (req, res) => {
+  const { id } = req.params;
+  const { status, admin_email } = req.body;
+
+  if (!['Approved', 'Rejected'].includes(status)) {
+    return res.status(400).json({ message: 'Invalid status value' });
+  }
+
+  const sqlQuery = `
+    UPDATE RegistrationRequests
+    SET status = ?, admin_email = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?;
+  `;
+
+  connection.query(sqlQuery, [status, admin_email, id], (err, results) => {
+    if (err) {
+      console.error('Error updating registration request status:', err.message);
+      return res.status(500).json({ message: 'Database update error' });
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'Registration request not found' });
+    }
+
+    res.json({ message: `Request ${status.toLowerCase()} successfully` });
+  });
+});
+
+// Get registration requests for a specific volunteer
+app.get('/api/registration-requests/volunteer/:volunteerEmail', (req, res) => {
+  const { volunteerEmail } = req.params;
+
+  const sqlQuery = `
+    SELECT * FROM RegistrationRequests
+    WHERE volunteer_email = ?
+    ORDER BY created_at DESC;
+  `;
+
+  connection.query(sqlQuery, [volunteerEmail], (err, results) => {
+    if (err) {
+      console.error('Error fetching registration requests for volunteer:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    res.json(results);
+  });
+});
+
+// Delete a registration request (Optional, for Admin only)
+app.delete('/api/registration-requests/:id', (req, res) => {
+  const { id } = req.params;
+
+  const sqlQuery = `
+    DELETE FROM RegistrationRequests WHERE id = ?;
+  `;
+
+  connection.query(sqlQuery, [id], (err, results) => {
+    if (err) {
+      console.error('Error deleting registration request:', err.message);
+      return res.status(500).json({ message: 'Database deletion error' });
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'Registration request not found' });
+    }
+
+    res.json({ message: 'Registration request deleted successfully' });
+  });
+});
+
 // Add a volunteer class registration
 app.post('/api/volunteer-classes', (req, res) => {
   const { volunteer_email, class_name, semester, year, organization } = req.body;

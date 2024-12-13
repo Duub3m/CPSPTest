@@ -3,7 +3,8 @@ import './VolunteerRequests.css';
 
 const VolunteerRequests = () => {
   const [email, setEmail] = useState(null); // Logged-in volunteer's email
-  const [requests, setRequests] = useState([]); // Requests made by the volunteer
+  const [hourRequests, setHourRequests] = useState([]); // Hour Requests
+  const [registrationRequests, setRegistrationRequests] = useState([]); // Registration Requests
   const [loading, setLoading] = useState(true); // Loading state
 
   // Fetch logged-in user's email
@@ -30,32 +31,57 @@ const VolunteerRequests = () => {
     fetchLoggedInUser();
   }, []);
 
-  // Fetch requests for the logged-in volunteer
+  // Fetch hour requests for the logged-in volunteer
   useEffect(() => {
     if (!email) return;
 
-    const fetchRequests = async () => {
+    const fetchHourRequests = async () => {
       try {
         const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/requests/volunteer/${email}`);
         if (!response.ok) {
-          throw new Error('Failed to fetch requests');
+          throw new Error('Failed to fetch hour requests');
         }
         const data = await response.json();
 
-        // Sort requests by the most recent (descending order by date and time)
+        // Sort hour requests by the most recent (descending order by date and time)
         const sortedRequests = data.sort((a, b) => {
           const dateTimeA = new Date(`${a.date}T${a.from_time}`);
           const dateTimeB = new Date(`${b.date}T${b.from_time}`);
           return dateTimeB - dateTimeA; // Most recent first
         });
 
-        setRequests(sortedRequests);
+        setHourRequests(sortedRequests);
       } catch (error) {
-        console.error('Error fetching requests:', error);
+        console.error('Error fetching hour requests:', error);
       }
     };
 
-    fetchRequests();
+    fetchHourRequests();
+  }, [email]);
+
+  // Fetch registration requests for the logged-in volunteer
+  useEffect(() => {
+    if (!email) return;
+
+    const fetchRegistrationRequests = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/registration-requests/volunteer/${email}`
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch registration requests');
+        }
+        const data = await response.json();
+
+        // Sort registration requests by the most recent (descending order by created_at)
+        const sortedRequests = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setRegistrationRequests(sortedRequests);
+      } catch (error) {
+        console.error('Error fetching registration requests:', error);
+      }
+    };
+
+    fetchRegistrationRequests();
   }, [email]);
 
   // Convert time to 12-hour format
@@ -72,20 +98,7 @@ const VolunteerRequests = () => {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const options = { month: 'long', day: 'numeric', year: 'numeric' };
-    const formattedDate = date.toLocaleDateString('en-US', options);
-
-    // Add ordinal suffix (st, nd, rd, th) to the day
-    const day = date.getDate();
-    const suffix =
-      day % 10 === 1 && day !== 11
-        ? 'st'
-        : day % 10 === 2 && day !== 12
-        ? 'nd'
-        : day % 10 === 3 && day !== 13
-        ? 'rd'
-        : 'th';
-
-    return formattedDate.replace(/\d+/, `${day}${suffix}`);
+    return date.toLocaleDateString('en-US', options);
   };
 
   if (loading) {
@@ -95,9 +108,29 @@ const VolunteerRequests = () => {
   return (
     <div className="volunteer-requests-container">
       <h2>Your Requests</h2>
-      {requests.length > 0 ? (
+  <h3>Registration Requests</h3>
+        {registrationRequests.length > 0 ? (
+          <ul className="requests-list">
+            {registrationRequests.map((req) => (
+              <li key={req.id} className="request-item">
+                <p><strong>Course:</strong> {req.course_name}</p>
+                <p><strong>Semester:</strong> {req.semester}</p>
+                <p><strong>Year:</strong> {req.year}</p>
+                <p><strong>Organization:</strong> {req.organization}</p>
+                <p>
+                  <strong>Status:</strong>{' '}
+                  <span className={`status ${req.status.toLowerCase()}`}>{req.status}</span>
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>You have no registration requests at the moment.</p>
+        )}
+      <h3>Hour Requests</h3>
+      {hourRequests.length > 0 ? (
         <ul className="requests-list">
-          {requests.map((req) => (
+          {hourRequests.map((req) => (
             <li key={req.id} className="request-item">
               <p><strong>Date:</strong> {formatDate(req.date)}</p>
               <p><strong>From:</strong> {convertTo12HourFormat(req.from_time)}</p>
@@ -112,8 +145,10 @@ const VolunteerRequests = () => {
           ))}
         </ul>
       ) : (
-        <p>You have no requests at the moment.</p>
+        <p>You have no hour requests at the moment.</p>
       )}
+
+      
     </div>
   );
 };

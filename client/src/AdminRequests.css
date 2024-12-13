@@ -1,0 +1,72 @@
+.admin-requests-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: auto;
+  }
+  
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  .requests-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  .requests-table th,
+  .requests-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  .requests-table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+  }
+  
+  .status {
+    text-transform: capitalize;
+  }
+  
+  .status.approved {
+    color: green;
+  }
+  
+  .status.rejected {
+    color: red;
+  }
+  
+  .status.pending {
+    color: orange;
+  }
+  
+  .approve-btn,
+  .reject-btn {
+    padding: 5px 10px;
+    margin: 0 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .approve-btn {
+    background-color: green;
+    color: white;
+  }
+  
+  .reject-btn {
+    background-color: red;
+    color: white;
+  }
+  
+  .approve-btn:hover {
+    background-color: darkgreen;
+  }
+  
+  .reject-btn:hover {
+    background-color: darkred;
+  }
+  

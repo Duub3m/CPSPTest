@@ -16,6 +16,9 @@ import SupervisorList from './SupervisorList'
 import Messaging from './Messaging';
 import Dashboard from './Dashboard';
 import Layout from './Layout'; // Import Layout
+import AdminRequests from './AdminRequests';
+import VolunteerListAdmin from './VolunteerListAdmin';
+import SupervisorListAdmin from './SupervisorListAdmin';
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
@@ -33,6 +36,9 @@ const router = createBrowserRouter([
   { path: '/Messaging', element: <Messaging /> },
   { path: '/Dashboard', element: <Dashboard /> },
   { path: '/Layout', element: <Layout /> },
+  { path: '/AdminRequests', element: <AdminRequests /> },
+  { path: '/VolunteerListAdmin', element: <VolunteerListAdmin /> },
+  { path: '/SupervisorListAdmin', element: <SupervisorListAdmin /> },
 ]);
 
 function App() {
