@@ -23,6 +23,7 @@ const Dashboard = () => {
   const [email, setEmail] = useState(null); // State for user email
   const [loading, setLoading] = useState(true); // State for loading status
   const [chartData, setChartData] = useState(null); // State for chart data
+  const [activityData, setActivityData] = useState([]); // Auxiliary array for activity data
 
   // Fetch the signed-in user's email
   useEffect(() => {
@@ -81,25 +82,28 @@ const Dashboard = () => {
         const data = await response.json();
 
         // Prepare chart data
+        const labels = data.map((item) => {
+          const date = new Date(item.activity_date);
+          return new Intl.DateTimeFormat('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+          }).format(date);
+        });
+
+        setActivityData(data.map((item) => item.activity)); // Store activity in a separate array
+
         const formattedData = {
-          labels: data.map((item) => {
-            // Format date to MM/DD
-            const date = new Date(item.activity_date);
-            return new Intl.DateTimeFormat('en-US', {
-              month: '2-digit',
-              day: '2-digit',
-            }).format(date);
-          }),
+          labels,
           datasets: [
             {
               label: 'Hours Volunteered',
-              data: data.map((item) => parseFloat(item.total_hours)), // Convert total_hours to numbers
+              data: data.map((item) => parseFloat(item.total_hours)),
               borderColor: 'rgba(75, 192, 192, 1)',
               backgroundColor: 'rgba(75, 192, 192, 0.2)',
               pointBackgroundColor: 'rgba(75, 192, 192, 1)',
               pointBorderColor: '#fff',
               fill: true,
-              tension: 0.4, // Adds curve to the line
+              tension: 0.4,
             },
           ],
         };
@@ -141,6 +145,16 @@ const Dashboard = () => {
                 title: {
                   display: true,
                   text: 'Volunteering Progress Over Time',
+                },
+                tooltip: {
+                  callbacks: {
+                    label: (tooltipItem) => {
+                      const index = tooltipItem.dataIndex;
+                      const activity = activityData[index]; // Access activity from auxiliary array
+                      const hours = tooltipItem.raw;
+                      return `${hours} Hours - ${activity}`;
+                    },
+                  },
                 },
               },
               scales: {
