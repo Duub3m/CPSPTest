@@ -44,6 +44,29 @@ connection.connect((err) => {
 
 // Routes
 
+// Get progress data for a specific volunteer
+app.get('/api/volunteer/progress/:email', (req, res) => {
+  const { email } = req.params;
+
+  const sqlQuery = `
+    SELECT activity, DATE(date) as activity_date, SUM(hours) as total_hours
+    FROM HoursRequests
+    WHERE volunteer_email = ? AND status = 'Approved'
+    GROUP BY activity, activity_date
+    ORDER BY activity_date ASC;
+  `;
+
+  connection.query(sqlQuery, [email], (err, results) => {
+    if (err) {
+      console.error('Error fetching volunteer progress:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    res.json(results);
+  });
+});
+
+
 //Messaging
 // Add a new message
 app.post('/api/messages', (req, res) => {

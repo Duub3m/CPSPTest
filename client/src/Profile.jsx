@@ -100,6 +100,7 @@ const Profile = () => {
                   >
                 Volunteer Opportunities
               </a></li>
+              {role === 'Volunteer' && <li><Link to="/Dashboard">Dashboard</Link></li>}
               {role === 'Volunteer' && <li><Link to="/add-hours">Add Hours</Link></li>}
               {role === 'Volunteer' && <li><Link to="/VolunteerRequests">Requests</Link></li>}
               {role === 'Volunteer' && <li><Link to="/SupervisorList">Supervisor List</Link></li>}

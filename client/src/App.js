@@ -14,6 +14,7 @@ import Profile2 from './Profile2'
 import VolunteerList from './VolunteerList'
 import SupervisorList from './SupervisorList'
 import Messaging from './Messaging';
+import Dashboard from './Dashboard';
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
@@ -29,6 +30,7 @@ const router = createBrowserRouter([
   { path: '/VolunteerList', element: <VolunteerList /> }, 
   { path: '/SupervisorList', element: <SupervisorList /> },
   { path: '/Messaging', element: <Messaging /> },
+  { path: '/Dashboard', element: <Dashboard /> },
 ]);
 
 function App() {
