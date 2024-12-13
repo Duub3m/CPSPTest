@@ -81,7 +81,8 @@ const Dashboard = () => {
         }
         const data = await response.json();
 
-        // Prepare chart data
+        // Prepare cumulative chart data
+        let cumulativeHours = 0;
         const labels = data.map((item) => {
           const date = new Date(item.activity_date);
           return new Intl.DateTimeFormat('en-US', {
@@ -90,14 +91,19 @@ const Dashboard = () => {
           }).format(date);
         });
 
+        const cumulativeData = data.map((item) => {
+          cumulativeHours += parseFloat(item.total_hours); // Accumulate hours
+          return Math.min(cumulativeHours, 100); // Cap at 100 hours
+        });
+
         setActivityData(data.map((item) => item.activity)); // Store activity in a separate array
 
         const formattedData = {
           labels,
           datasets: [
             {
-              label: 'Hours Volunteered',
-              data: data.map((item) => parseFloat(item.total_hours)),
+              label: 'Cumulative Hours Toward 100',
+              data: cumulativeData,
               borderColor: 'rgba(75, 192, 192, 1)',
               backgroundColor: 'rgba(75, 192, 192, 0.2)',
               pointBackgroundColor: 'rgba(75, 192, 192, 1)',
@@ -144,7 +150,7 @@ const Dashboard = () => {
                 },
                 title: {
                   display: true,
-                  text: 'Volunteering Progress Over Time',
+                  text: 'Cumulative Volunteering Hours Toward 100',
                 },
                 tooltip: {
                   callbacks: {
@@ -152,7 +158,7 @@ const Dashboard = () => {
                       const index = tooltipItem.dataIndex;
                       const activity = activityData[index]; // Access activity from auxiliary array
                       const hours = tooltipItem.raw;
-                      return `${hours} Hours - ${activity}`;
+                      return `${hours.toFixed(2)} Hours - ${activity}`;
                     },
                   },
                 },
@@ -166,9 +172,10 @@ const Dashboard = () => {
                 },
                 y: {
                   beginAtZero: true,
+                  max: 100, // Set Y-axis max to 100 hours
                   title: {
                     display: true,
-                    text: 'Total Hours',
+                    text: 'Cumulative Hours',
                   },
                 },
               },

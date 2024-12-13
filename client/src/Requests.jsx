@@ -30,7 +30,10 @@ const Requests = () => {
         }
 
         const requestsData = await requestsResponse.json();
-        setRequests(requestsData);
+
+        // Sort requests to show the newest first
+        const sortedRequests = requestsData.sort((a, b) => new Date(b.date) - new Date(a.date));
+        setRequests(sortedRequests);
       } catch (error) {
         console.error('Error fetching requests:', error);
       } finally {
@@ -55,7 +58,7 @@ const Requests = () => {
         throw new Error(`Failed to ${status.toLowerCase()} request`);
       }
 
-      // Update the UI
+      // Remove the request from the list after action
       setRequests((prevRequests) => prevRequests.filter((request) => request.id !== id));
       alert(`Request ${status.toLowerCase()} successfully`);
     } catch (error) {

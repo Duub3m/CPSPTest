@@ -42,11 +42,11 @@ const VolunteerRequests = () => {
         }
         const data = await response.json();
 
-        // Sort requests in descending order (most recent first)
+        // Sort requests by the most recent (descending order by date and time)
         const sortedRequests = data.sort((a, b) => {
-          const dateA = new Date(`${a.date}T${a.from_time}`);
-          const dateB = new Date(`${b.date}T${b.from_time}`);
-          return dateB - dateA; // Most recent at the top
+          const dateTimeA = new Date(`${a.date}T${a.from_time}`);
+          const dateTimeB = new Date(`${b.date}T${b.from_time}`);
+          return dateTimeB - dateTimeA; // Most recent first
         });
 
         setRequests(sortedRequests);
@@ -57,6 +57,36 @@ const VolunteerRequests = () => {
 
     fetchRequests();
   }, [email]);
+
+  // Convert time to 12-hour format
+  const convertTo12HourFormat = (time) => {
+    const [hour, minute] = time.split(':');
+    const hourInt = parseInt(hour, 10);
+    const isPM = hourInt >= 12;
+    const adjustedHour = hourInt % 12 || 12; // Convert 0 to 12 for midnight
+    const amPm = isPM ? 'PM' : 'AM';
+    return `${adjustedHour}:${minute} ${amPm}`;
+  };
+
+  // Format date with month, day, and year
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const options = { month: 'long', day: 'numeric', year: 'numeric' };
+    const formattedDate = date.toLocaleDateString('en-US', options);
+
+    // Add ordinal suffix (st, nd, rd, th) to the day
+    const day = date.getDate();
+    const suffix =
+      day % 10 === 1 && day !== 11
+        ? 'st'
+        : day % 10 === 2 && day !== 12
+        ? 'nd'
+        : day % 10 === 3 && day !== 13
+        ? 'rd'
+        : 'th';
+
+    return formattedDate.replace(/\d+/, `${day}${suffix}`);
+  };
 
   if (loading) {
     return <p>Loading your requests...</p>;
@@ -69,10 +99,15 @@ const VolunteerRequests = () => {
         <ul className="requests-list">
           {requests.map((req) => (
             <li key={req.id} className="request-item">
-              <p><strong>Date:</strong> {req.date}</p>
+              <p><strong>Date:</strong> {formatDate(req.date)}</p>
+              <p><strong>From:</strong> {convertTo12HourFormat(req.from_time)}</p>
+              <p><strong>To:</strong> {convertTo12HourFormat(req.to_time)}</p>
               <p><strong>Activity:</strong> {req.activity}</p>
               <p><strong>Hours:</strong> {req.hours}</p>
-              <p><strong>Status:</strong> <span className={`status ${req.status.toLowerCase()}`}>{req.status}</span></p>
+              <p>
+                <strong>Status:</strong>{' '}
+                <span className={`status ${req.status.toLowerCase()}`}>{req.status}</span>
+              </p>
             </li>
           ))}
         </ul>

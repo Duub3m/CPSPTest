@@ -44,6 +44,51 @@ connection.connect((err) => {
 
 // Routes
 
+// Add a volunteer class registration
+app.post('/api/volunteer-classes', (req, res) => {
+  const { volunteer_email, class_name, semester, year, organization } = req.body;
+
+  const sqlQuery = `
+    INSERT INTO VolunteerClasses (volunteer_email, class_name, semester, year, organization)
+    VALUES (?, ?, ?, ?, ?);
+  `;
+
+  connection.query(
+    sqlQuery,
+    [volunteer_email, class_name, semester, year, organization],
+    (err, results) => {
+      if (err) {
+        console.error('Error inserting volunteer class registration:', err.message);
+        return res.status(500).json({ message: 'Database insertion error' });
+      }
+
+      res.status(201).json({ message: 'Volunteer class registration successful', id: results.insertId });
+    }
+  );
+});
+
+
+//Count pending Requests
+app.get('/api/requests/count/:supervisorEmail', (req, res) => {
+  const { supervisorEmail } = req.params;
+
+  const sqlQuery = `
+    SELECT COUNT(*) AS pending_count
+    FROM HoursRequests
+    WHERE supervisor_email = ? AND status = 'Pending';
+  `;
+
+  connection.query(sqlQuery, [supervisorEmail], (err, results) => {
+    if (err) {
+      console.error('Error counting pending requests:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    const count = results[0]?.pending_count || 0;
+    res.json({ pending_count: count });
+  });
+});
+
 // Get progress data for a specific volunteer
 app.get('/api/volunteer/progress/:email', (req, res) => {
   const { email } = req.params;

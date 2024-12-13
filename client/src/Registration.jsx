@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Form.css";
 
 const Registration = () => {
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(1); // Track the current page
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -23,18 +23,98 @@ const Registration = () => {
     organization: "",
   });
 
+  const [isPageValid, setIsPageValid] = useState(false); // Validation for the current page
+  const navigate = useNavigate(); // React Router navigation
+
+  // Fetch logged-in user data and prefill fields
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/auth/logged_in`, {
+          credentials: "include",
+        });
+        const userData = await response.json();
+
+        if (userData.loggedIn) {
+          setFormData((prev) => ({
+            ...prev,
+            firstName: userData.user.firstName || "",
+            lastName: userData.user.lastName || "",
+            personalEmail: userData.user.email || "",
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const nextPage = () => setPage((prev) => Math.min(prev + 1, 4));
+  const nextPage = () => {
+    if (isPageValid) {
+      setPage((prev) => Math.min(prev + 1, 4));
+    } else {
+      alert("Please fill out all required fields before proceeding.");
+    }
+  };
+
   const prevPage = () => setPage((prev) => Math.max(prev - 1, 1));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Submitted:", formData);
-    alert("Form Submitted!");
+
+    // Prepare data for API
+    const payload = {
+      volunteer_email: formData.personalEmail,
+      class_name: formData.course,
+      semester: formData.semester,
+      year: formData.year,
+      organization: formData.organization,
+    };
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/volunteer-classes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to register volunteer class.");
+      }
+
+      alert("Registration successful!");
+      navigate("/Profile"); // Redirect to the Profile page
+    } catch (error) {
+      console.error("Error submitting registration:", error);
+      alert("An error occurred during registration. Please try again.");
+    }
   };
+
+  // Validate fields on the current page
+  useEffect(() => {
+    const validatePage = () => {
+      const requiredFields = {
+        1: ["firstName", "lastName", "gender", "age", "ethnicity"],
+        2: ["ualbanyEmail", "personalEmail", "phoneNumber"],
+        3: ["ualbanyId", "academicStanding", "major"],
+        4: ["semester", "year", "course", "organization"],
+      };
+
+      const currentPageFields = requiredFields[page];
+      const isValid = currentPageFields.every((field) => formData[field]?.trim() !== "");
+      setIsPageValid(isValid);
+    };
+
+    validatePage();
+  }, [page, formData]);
 
   return (
     <div className="form-container">
@@ -225,10 +305,10 @@ const Registration = () => {
                 required
               >
                 <option value="">Select Course</option>
-                <option value="RSSW 190">RSSW 190</option>
-                <option value="RSSW 291">RSSW 291</option>
-                <option value="RSSW 290">RSSW 290</option>
-                <option value="RSSW 390">RSSW 390</option>
+                <option value="RSSW190">RSSW 190</option>
+                <option value="RSSW291">RSSW 291</option>
+                <option value="RSSW290">RSSW 290</option>
+                <option value="RSSW390">RSSW 390</option>
               </select>
             </div>
             <div className="form-group">
@@ -246,7 +326,15 @@ const Registration = () => {
 
         <div className="form-navigation">
           {page > 1 && <button type="button" onClick={prevPage}>Previous</button>}
-          {page < 4 && <button type="button" onClick={nextPage}>Next</button>}
+          {page < 4 && (
+            <button
+              type="button"
+              onClick={() => nextPage()}
+              disabled={!isPageValid}
+            >
+              Next
+            </button>
+          )}
           {page === 4 && <button type="submit">Submit</button>}
         </div>
       </form>

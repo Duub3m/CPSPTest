@@ -43,6 +43,25 @@
   .navbar li {
     margin-bottom: 15px;
   }
+
+  /* Styles for the count badge next to "Requests" */
+.navbar li a span {
+    background-color: #E5B340; /* Gold background for the count badge */
+    color: #ffffff; /* White text for contrast */
+    padding: 4px; /* Smaller padding to make the badge circular */
+    border-radius: 50%; /* Fully round the edges */
+    font-size: 16px; /* Font size for the badge */
+    margin-left: 8px; /* Space between the text and the badge */
+    font-weight: bold; /* Make the text bold */
+    display: inline-block; /* Ensures proper positioning and sizing */
+    width: 20px; /* Define the width for a perfect circle */
+    height: 20px; /* Define the height for a perfect circle */
+    text-align: center; /* Center-align the number inside the badge */
+    line-height: 20px; /* Vertically align the number */
+    border:solid;
+    border-color: #ffffff;
+}
+  
   
   .navbar li a {
     color: #fff;

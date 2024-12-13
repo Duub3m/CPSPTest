@@ -1,35 +1,69 @@
+/* Volunteer Requests Container */
 .volunteer-requests-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-  
-  .requests-list {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .request-item {
-    border: 1px solid #ccc;
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    background: #f9f9f9;
-  }
-  
-  .status {
-    font-weight: bold;
-  }
-  
-  .status.pending {
-    color: orange;
-  }
-  
-  .status.approved {
-    color: green;
-  }
-  
-  .status.rejected {
-    color: red;
-  }
-  
+  padding: 20px;
+  margin-top: 60px; /* Ensure space for any fixed navbar */
+  overflow: auto; /* Allow scrolling */
+  max-height: calc(100vh - 120px); /* Prevent overflow on smaller screens */
+  box-sizing: border-box;
+}
+
+/* Title Styling */
+.volunteer-requests-container h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #401967; /* Custom purple color */
+}
+
+/* Requests List */
+.requests-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Request Item */
+.request-item {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.request-item p {
+  margin: 5px 0;
+}
+
+/* Status Styling */
+.status {
+  font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.status.approved {
+  color: #28a745;
+}
+
+.status.pending {
+  color: #ffc107;
+}
+
+.status.rejected {
+  color: #ed182d;
+}
+
+/* Ensure overflow content is scrollable */
+.volunteer-requests-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.volunteer-requests-container::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 4px;
+}
+
+.volunteer-requests-container::-webkit-scrollbar-thumb:hover {
+  background-color: #999;
+}
