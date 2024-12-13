@@ -185,9 +185,20 @@ app.get('/api/requests/:supervisorEmail', (req, res) => {
   const { supervisorEmail } = req.params;
 
   const sqlQuery = `
-    SELECT id, volunteer_email, date, from_time, to_time, activity, hours, status
-    FROM HoursRequests
-    WHERE supervisor_email = ? AND status = 'Pending';
+    SELECT 
+      hr.id, 
+      hr.volunteer_email, 
+      v.first_name AS volunteer_first_name, 
+      v.last_name AS volunteer_last_name, 
+      hr.date, 
+      hr.from_time, 
+      hr.to_time, 
+      hr.activity, 
+      hr.hours, 
+      hr.status
+    FROM HoursRequests hr
+    JOIN Volunteers v ON hr.volunteer_email = v.email
+    WHERE hr.supervisor_email = ? AND hr.status = 'Pending';
   `;
 
   connection.query(sqlQuery, [supervisorEmail], (err, results) => {
@@ -199,6 +210,7 @@ app.get('/api/requests/:supervisorEmail', (req, res) => {
     res.json(results);
   });
 });
+
 
 
 app.put('/api/requests/:id', (req, res) => {

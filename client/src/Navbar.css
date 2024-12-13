@@ -1,0 +1,76 @@
+/* Persistent Navbar */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 240px;
+    background-color: #4c4c4c;
+    color: #fff;
+    padding: 20px;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 10;
+  }
+
+  /* Navbar Logo */
+.navbar-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 140px;
+    height: 140px;
+    background-color: #fff; /* White background */
+    border-radius: 50%; /* Makes it a circle */
+    overflow: hidden; /* Ensures the image stays within the circle */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: Add a subtle shadow */
+  }
+  
+  .navbar-logo img {
+    width: 120px; /* Adjust image size */
+    height: 120px; /* Ensure it fits within the circle */
+    object-fit: cover; /* Ensures the image scales properly */
+  }
+  
+  .navbar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .navbar li {
+    margin-bottom: 15px;
+  }
+  
+  .navbar li a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 10px 15px;
+    border-radius: 5px;
+    display: block;
+    transition: background-color 0.3s;
+  }
+  
+  .navbar li a:hover {
+    background-color: #E5B340;
+  }
+  
+  .navbar .btn-logout {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: auto; /* Push logout button to the bottom */
+    transition: background-color 0.3s;
+  }
+  
+  .navbar .btn-logout:hover {
+    background-color: #cc0000;
+  }
+  

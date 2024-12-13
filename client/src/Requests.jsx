@@ -64,6 +64,34 @@ const Requests = () => {
     }
   };
 
+  const convertTo12HourFormat = (time) => {
+    const [hour, minute] = time.split(':');
+    const hourInt = parseInt(hour, 10);
+    const isPM = hourInt >= 12;
+    const adjustedHour = hourInt % 12 || 12; // Convert 0 to 12 for midnight
+    const amPm = isPM ? 'PM' : 'AM';
+    return `${adjustedHour}:${minute} ${amPm}`;
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const options = { month: 'long', day: 'numeric', year: 'numeric' };
+    const formattedDate = date.toLocaleDateString('en-US', options);
+
+    // Add ordinal suffix (st, nd, rd, th) to the day
+    const day = date.getDate();
+    const suffix =
+      day % 10 === 1 && day !== 11
+        ? 'st'
+        : day % 10 === 2 && day !== 12
+        ? 'nd'
+        : day % 10 === 3 && day !== 13
+        ? 'rd'
+        : 'th';
+
+    return formattedDate.replace(/\d+/, `${day}${suffix}`);
+  };
+
   if (loading) {
     return <p>Loading requests...</p>;
   }
@@ -77,11 +105,11 @@ const Requests = () => {
         <ul className="requests-list">
           {requests.map((request) => (
             <li key={request.id} className="request-item">
-              <p><strong>Volunteer Email:</strong> {request.volunteer_email}</p>
+              <p><strong>Volunteer Name:</strong> {request.volunteer_first_name} {request.volunteer_last_name}</p>
               <p><strong>Activity:</strong> {request.activity}</p>
-              <p><strong>Date:</strong> {request.date}</p>
-              <p><strong>From:</strong> {request.from_time}</p>
-              <p><strong>To:</strong> {request.to_time}</p>
+              <p><strong>Date:</strong> {formatDate(request.date)}</p>
+              <p><strong>From:</strong> {convertTo12HourFormat(request.from_time)}</p>
+              <p><strong>To:</strong> {convertTo12HourFormat(request.to_time)}</p>
               <p><strong>Hours:</strong> {request.hours}</p>
               <div className="actions">
                 <button onClick={() => handleRequestAction(request.id, 'Approved')} className="approve-btn">Approve</button>
