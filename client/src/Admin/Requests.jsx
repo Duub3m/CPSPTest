@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import "./AdminRequests.css";
+import "../Requests.css";
 
-const AdminRequests = () => {
+const Requests = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [adminEmail, setAdminEmail] = useState(""); // Admin email state
@@ -131,4 +131,4 @@ const AdminRequests = () => {
   );
 };
 
-export default AdminRequests;
+export default Requests;

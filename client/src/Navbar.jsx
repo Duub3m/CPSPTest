@@ -78,32 +78,32 @@ const Navbar = ({ role, handleLogout }) => {
         </li>
         {role === 'Volunteer' && (
           <>
-            <li><Link to="/Dashboard">Dashboard</Link></li>
-            <li><Link to="/add-hours">Add Hours</Link></li>
-            <li><Link to="/VolunteerRequests">Requests</Link></li>
-            <li><Link to="/SupervisorList">Supervisor List</Link></li>
-            <li><Link to="/Registration">Registration</Link></li>
+            <li><Link to="/Volunteer/Dashboard">Dashboard</Link></li>
+            <li><Link to="/Volunteer/AddHours">Add Hours</Link></li>
+            <li><Link to="/Volunteer/Requests">Requests</Link></li>
+            <li><Link to="/Volunteer/SupervisorList">Supervisor List</Link></li>
+            <li><Link to="/Volunteer/Registration">Registration</Link></li>
           </>
         )}
         {role === 'Supervisor' && (
           <>
             <li>
-              <Link to="/Requests">
+              <Link to="/Supervisor/Requests">
                 Requests {pendingRequestCount > 0 && <span>{pendingRequestCount}</span>}
               </Link>
             </li>
-            <li><Link to="/VolunteerList">Volunteer List</Link></li>
+            <li><Link to="/Supervisor/VolunteerList">Volunteer List</Link></li>
           </>
         )}
         {role === 'Admin' && (
           <>
             <li>
-              <Link to="/AdminRequests">
+              <Link to="/Admin/Requests">
                 Requests {adminRequestCount > 0 && <span>{adminRequestCount}</span>}
               </Link>
             </li>
-            <li><Link to="/SupervisorListAdmin">Supervisor List</Link></li>
-            <li><Link to="/VolunteerListAdmin">Volunteer List</Link></li>
+            <li><Link to="/Admin/SupervisorList">Supervisor List</Link></li>
+            <li><Link to="/Admin/VolunteerList">Volunteer List</Link></li>
           </>
         )}
         <li><Link to="/Messaging">Messages</Link></li>

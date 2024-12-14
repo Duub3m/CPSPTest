@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import './VolunteerRequests.css';
+import '../VolunteerRequests.css';
 
-const VolunteerRequests = () => {
+const Requests = () => {
   const [email, setEmail] = useState(null); // Logged-in volunteer's email
   const [hourRequests, setHourRequests] = useState([]); // Hour Requests
   const [registrationRequests, setRegistrationRequests] = useState([]); // Registration Requests
@@ -128,29 +128,31 @@ const VolunteerRequests = () => {
           <p>You have no registration requests at the moment.</p>
         )}
       <h3>Hour Requests</h3>
-      {hourRequests.length > 0 ? (
-        <ul className="requests-list">
-          {hourRequests.map((req) => (
-            <li key={req.id} className="request-item">
-              <p><strong>Date:</strong> {formatDate(req.date)}</p>
-              <p><strong>From:</strong> {convertTo12HourFormat(req.from_time)}</p>
-              <p><strong>To:</strong> {convertTo12HourFormat(req.to_time)}</p>
-              <p><strong>Activity:</strong> {req.activity}</p>
-              <p><strong>Hours:</strong> {req.hours}</p>
-              <p>
-                <strong>Status:</strong>{' '}
-                <span className={`status ${req.status.toLowerCase()}`}>{req.status}</span>
-              </p>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>You have no hour requests at the moment.</p>
-      )}
+{hourRequests.length > 0 ? (
+  <ul className="requests-list">
+    {hourRequests.map((req) => (
+      <li key={req.id} className="request-item">
+        <p><strong>Class:</strong> {req.class_name}</p>
+        <p><strong>Date:</strong> {formatDate(req.date)}</p>
+        <p><strong>From:</strong> {convertTo12HourFormat(req.from_time)}</p>
+        <p><strong>To:</strong> {convertTo12HourFormat(req.to_time)}</p>
+        <p><strong>Activity:</strong> {req.activity}</p>
+        <p><strong>Hours:</strong> {req.hours}</p>
+        <p>
+          <strong>Status:</strong>{' '}
+          <span className={`status ${req.status.toLowerCase()}`}>{req.status}</span>
+        </p>
+      </li>
+    ))}
+  </ul>
+) : (
+  <p>You have no hour requests at the moment.</p>
+)}
+
 
       
     </div>
   );
 };
 
-export default VolunteerRequests;
+export default Requests;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Form.css";
+import "../Registration.css";
 
 const Registration = () => {
   const [page, setPage] = useState(1); // Track the current page
@@ -67,38 +67,66 @@ const Registration = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Prepare data for API
-    const payload = {
-      volunteer_email: formData.personalEmail,
-      first_name: formData.firstName,
-      last_name: formData.lastName,
-      semester: formData.semester,
-      year: formData.year,
-      course_name: formData.course,
-      organization: formData.organization,
-    };
-
+  
     try {
-      const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/registration-requests`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
+      // Check if the user is already registered for the selected class
+      const checkEnrollmentResponse = await fetch(
+        `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/volunteer-classes/check-enrollment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            volunteer_email: formData.personalEmail,
+            course_name: formData.course,
+            semester: formData.semester,
+          }),
+        }
+      );
+  
+      const checkEnrollmentData = await checkEnrollmentResponse.json();
+  
+      if (checkEnrollmentData.isEnrolled) {
+        alert("You are already registered for this course.");
+        return;
+      }
+  
+      // Prepare data for API submission
+      const payload = {
+        volunteer_email: formData.personalEmail,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        semester: formData.semester,
+        year: formData.year,
+        course_name: formData.course,
+        organization: formData.organization,
+      };
+  
+      // Submit the registration request
+      const response = await fetch(
+        `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/registration-requests`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+  
       if (!response.ok) {
         throw new Error("Failed to submit registration request.");
       }
-
-      alert("Registration request submitted successfully!");
+  
+      alert("Thank you for submitting your Registration Request! One of our CPSP staff will review it and get back to you shortly");
       navigate("/Profile"); // Redirect to the Profile page
     } catch (error) {
       console.error("Error submitting registration request:", error);
       alert("An error occurred during registration. Please try again.");
     }
   };
+  
 
   // Validate fields on the current page
   useEffect(() => {

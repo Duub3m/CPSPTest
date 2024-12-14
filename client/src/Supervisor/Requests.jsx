@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './Requests.css';
+import '../Requests.css';
 
 const Requests = () => {
   const [requests, setRequests] = useState([]); // State to hold the requests
@@ -109,6 +109,7 @@ const Requests = () => {
           {requests.map((request) => (
             <li key={request.id} className="request-item">
               <p><strong>Volunteer Name:</strong> {request.volunteer_first_name} {request.volunteer_last_name}</p>
+              <p><strong>Class:</strong> {request.class_name}</p>
               <p><strong>Activity:</strong> {request.activity}</p>
               <p><strong>Date:</strong> {formatDate(request.date)}</p>
               <p><strong>From:</strong> {convertTo12HourFormat(request.from_time)}</p>

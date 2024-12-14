@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import './SupervisorList.css';
+import '../SupervisorList.css';
 
-const SupervisorListAdmin = () => {
+const SupervisorList = () => {
   const [supervisors, setSupervisors] = useState([]); // List of all supervisors
   const [loading, setLoading] = useState(true); // Loading state
 
@@ -49,4 +49,4 @@ const SupervisorListAdmin = () => {
   );
 };
 
-export default SupervisorListAdmin;
+export default SupervisorList;

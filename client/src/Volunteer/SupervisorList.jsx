@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './SupervisorList.css'; // Create a CSS file for styling
+import '../SupervisorList.css'; // Create a CSS file for styling
 
 const SupervisorList = () => {
   const [email, setEmail] = useState(null); // Logged-in volunteer's email

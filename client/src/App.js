@@ -4,41 +4,52 @@ import AuthContextProvider from './AuthContextProvider';
 import Home from './Home';
 import Callback from './Callback';
 import Profile from './Profile';
-import AddHours from './AddHours';
 import Login from './Login'; 
 import Database from './Database'; 
-import Registration from './Registration';
-import Requests from './Requests';
-import VolunteerRequests from'./VolunteerRequests'
+
+
+
 import Profile2 from './Profile2'
-import VolunteerList from './VolunteerList'
-import SupervisorList from './SupervisorList'
+
 import Messaging from './Messaging';
-import Dashboard from './Dashboard';
+
 import Layout from './Layout'; // Import Layout
-import AdminRequests from './AdminRequests';
-import VolunteerListAdmin from './VolunteerListAdmin';
-import SupervisorListAdmin from './SupervisorListAdmin';
+
+//Admin
+import AdminRequests from './Admin/Requests';
+import AdminVolunteerList from './Admin/VolunteerList';
+import AdminSupervisorList from './Admin/SupervisorList';
+
+//Supervisor
+import SupervisorVolunteerList from './Supervisor/VolunteerList';
+import SupervisorRequests from './Supervisor/Requests';
+
+//Volunteer
+import AddHours from './Volunteer/AddHours';
+import Dashboard from './Volunteer/Dashboard';
+import VolunteerRequests from'./Volunteer/Requests';
+import VolunteerSupervisorList from './Volunteer/SupervisorList';
+import Registration from './Volunteer/Registration';
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
   { path: '/auth/callback', element: <Callback /> },
   { path: '/profile', element: <Profile /> },
-  { path: '/add-hours', element: <AddHours /> }, 
+  { path: '/Volunteer/AddHours', element: <AddHours /> }, 
   { path: '/login', element: <Login /> }, 
   { path: '/database', element: <Database /> }, 
-  { path: '/Registration', element: <Registration /> }, 
-  { path: '/Requests', element: <Requests /> }, 
-  { path: '/VolunteerRequests', element: <VolunteerRequests /> }, 
+  { path: '/Volunteer/Registration', element: <Registration /> }, 
+  { path: '/Supervisor/Requests', element: <SupervisorRequests /> }, 
+  { path: '/Volunteer/Requests', element: <VolunteerRequests /> }, 
   { path: '/Profile2', element: <Profile2 /> }, 
-  { path: '/VolunteerList', element: <VolunteerList /> }, 
-  { path: '/SupervisorList', element: <SupervisorList /> },
+  { path: '/Supervisor/VolunteerList', element: <SupervisorVolunteerList /> }, 
+  { path: '/Volunteer/SupervisorList', element: <VolunteerSupervisorList /> },
   { path: '/Messaging', element: <Messaging /> },
-  { path: '/Dashboard', element: <Dashboard /> },
+  { path: '/Volunteer/Dashboard', element: <Dashboard /> },
   { path: '/Layout', element: <Layout /> },
-  { path: '/AdminRequests', element: <AdminRequests /> },
-  { path: '/VolunteerListAdmin', element: <VolunteerListAdmin /> },
-  { path: '/SupervisorListAdmin', element: <SupervisorListAdmin /> },
+  { path: '/Admin/Requests', element: <AdminRequests /> },
+  { path: '/Admin/VolunteerList', element: <AdminVolunteerList /> },
+  { path: '/Admin/SupervisorList', element: <AdminSupervisorList /> },
 ]);
 
 function App() {

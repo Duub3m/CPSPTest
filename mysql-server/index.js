@@ -44,6 +44,52 @@ connection.connect((err) => {
 
 // Routes
 
+// Check if a volunteer is already enrolled in a course
+app.post('/api/volunteer-classes/check-enrollment', (req, res) => {
+  const { volunteer_email, course_name, semester } = req.body;
+
+  const sqlQuery = `
+    SELECT COUNT(*) AS count
+    FROM VolunteerClasses
+    WHERE volunteer_email = ? AND class_name = ? AND semester = ?;
+  `;
+
+  connection.query(sqlQuery, [volunteer_email, course_name, semester], (err, results) => {
+    if (err) {
+      console.error('Error checking enrollment:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    const isEnrolled = results[0].count > 0;
+    res.json({ isEnrolled });
+  });
+});
+
+
+// Get class details by class name
+app.get('/api/classes/:class_name', (req, res) => {
+  const { class_name } = req.params;
+
+  const sqlQuery = `
+    SELECT class_name, hour_requirement
+    FROM Classes
+    WHERE class_name = ?;
+  `;
+
+  connection.query(sqlQuery, [class_name], (err, results) => {
+    if (err) {
+      console.error('Error fetching class details:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'Class not found' });
+    }
+
+    res.json(results[0]);
+  });
+});
+
 // Routes for Registration Requests
 
 // Get count of pending registration requests for Admins
@@ -117,13 +163,13 @@ app.put('/api/registration-requests/:id', (req, res) => {
     return res.status(400).json({ message: 'Invalid status value' });
   }
 
-  const sqlQuery = `
+  const updateQuery = `
     UPDATE RegistrationRequests
     SET status = ?, admin_email = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?;
   `;
 
-  connection.query(sqlQuery, [status, admin_email, id], (err, results) => {
+  connection.query(updateQuery, [status, admin_email, id], (err, results) => {
     if (err) {
       console.error('Error updating registration request status:', err.message);
       return res.status(500).json({ message: 'Database update error' });
@@ -133,9 +179,44 @@ app.put('/api/registration-requests/:id', (req, res) => {
       return res.status(404).json({ message: 'Registration request not found' });
     }
 
+    if (status === 'Approved') {
+      // Fetch the request details to insert into VolunteerClasses
+      const selectQuery = `
+        SELECT volunteer_email, course_name, semester, year, organization
+        FROM RegistrationRequests
+        WHERE id = ?;
+      `;
+
+      connection.query(selectQuery, [id], (err, rows) => {
+        if (err) {
+          console.error('Error fetching registration request details:', err.message);
+          return res.status(500).json({ message: 'Database query error' });
+        }
+
+        if (rows.length > 0) {
+          const { volunteer_email, course_name, semester, year, organization } = rows[0];
+
+          const insertQuery = `
+            INSERT INTO VolunteerClasses (volunteer_email, class_name, semester, year, organization)
+            VALUES (?, ?, ?, ?, ?);
+          `;
+
+          connection.query(insertQuery, [volunteer_email, course_name, semester, year, organization], (err) => {
+            if (err) {
+              console.error('Error inserting into VolunteerClasses:', err.message);
+              return res.status(500).json({ message: 'Database insertion error' });
+            }
+
+            console.log('Request approved and added to VolunteerClasses');
+          });
+        }
+      });
+    }
+
     res.json({ message: `Request ${status.toLowerCase()} successfully` });
   });
 });
+
 
 // Get registration requests for a specific volunteer
 app.get('/api/registration-requests/volunteer/:volunteerEmail', (req, res) => {
@@ -201,51 +282,6 @@ app.post('/api/volunteer-classes', (req, res) => {
     }
   );
 });
-
-
-//Count pending Requests
-app.get('/api/requests/count/:supervisorEmail', (req, res) => {
-  const { supervisorEmail } = req.params;
-
-  const sqlQuery = `
-    SELECT COUNT(*) AS pending_count
-    FROM HoursRequests
-    WHERE supervisor_email = ? AND status = 'Pending';
-  `;
-
-  connection.query(sqlQuery, [supervisorEmail], (err, results) => {
-    if (err) {
-      console.error('Error counting pending requests:', err.message);
-      return res.status(500).json({ message: 'Database query error' });
-    }
-
-    const count = results[0]?.pending_count || 0;
-    res.json({ pending_count: count });
-  });
-});
-
-// Get progress data for a specific volunteer
-app.get('/api/volunteer/progress/:email', (req, res) => {
-  const { email } = req.params;
-
-  const sqlQuery = `
-    SELECT activity, DATE(date) as activity_date, SUM(hours) as total_hours
-    FROM HoursRequests
-    WHERE volunteer_email = ? AND status = 'Approved'
-    GROUP BY activity, activity_date
-    ORDER BY activity_date ASC;
-  `;
-
-  connection.query(sqlQuery, [email], (err, results) => {
-    if (err) {
-      console.error('Error fetching volunteer progress:', err.message);
-      return res.status(500).json({ message: 'Database query error' });
-    }
-
-    res.json(results);
-  });
-});
-
 
 //Messaging
 // Add a new message
@@ -340,19 +376,19 @@ app.get('/api/supervisor/volunteers/:supervisorEmail', (req, res) => {
   });
 });
 
-//fetch requests for a volunteer
-app.get('/api/requests/volunteer/:email', (req, res) => {
+// Get all classes for a specific volunteer
+app.get('/api/volunteer-classes/:email', (req, res) => {
   const { email } = req.params;
 
   const sqlQuery = `
-    SELECT id, date, from_time, to_time, activity, hours, status
-    FROM HoursRequests
+    SELECT class_name, semester, year, organization
+    FROM VolunteerClasses
     WHERE volunteer_email = ?;
   `;
 
   connection.query(sqlQuery, [email], (err, results) => {
     if (err) {
-      console.error('Error fetching requests:', err.message);
+      console.error('Error fetching volunteer classes:', err.message);
       return res.status(500).json({ message: 'Database query error' });
     }
 
@@ -360,6 +396,114 @@ app.get('/api/requests/volunteer/:email', (req, res) => {
   });
 });
 
+// Get progress data for a specific volunteer and class
+app.get('/api/volunteer/progress/:email', (req, res) => {
+  const { email } = req.params;
+  const { class_name } = req.query;
+
+  const sqlQuery = `
+    SELECT activity, DATE(date) as activity_date, SUM(hours) as total_hours
+    FROM HoursRequests
+    WHERE volunteer_email = ? AND class_name = ? AND status = 'Approved'
+    GROUP BY activity, activity_date
+    ORDER BY activity_date ASC;
+  `;
+
+  connection.query(sqlQuery, [email, class_name], (err, results) => {
+    if (err) {
+      console.error('Error fetching volunteer progress:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    res.json(results);
+  });
+});
+
+
+// Get classes for a specific volunteer
+app.get('/api/volunteer/classes/:email', (req, res) => {
+  const { email } = req.params;
+
+  const sqlQuery = `
+    SELECT class_name FROM VolunteerClasses WHERE volunteer_email = ?;
+  `;
+
+  connection.query(sqlQuery, [email], (err, results) => {
+    if (err) {
+      console.error('Error fetching volunteer classes:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    res.json(results);
+  });
+});
+
+
+// Get progress data for a specific volunteer
+app.get('/api/volunteer/progress/:email', (req, res) => {
+  const { email } = req.params;
+
+  const sqlQuery = `
+    SELECT activity, class_name, DATE(date) as activity_date, SUM(hours) as total_hours
+    FROM HoursRequests
+    WHERE volunteer_email = ? AND status = 'Approved'
+    GROUP BY activity, class_name, activity_date
+    ORDER BY activity_date ASC;
+  `;
+
+  connection.query(sqlQuery, [email], (err, results) => {
+    if (err) {
+      console.error('Error fetching volunteer progress:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    res.json(results);
+  });
+});
+
+
+//Count pending Requests
+app.get('/api/requests/count/:supervisorEmail', (req, res) => {
+  const { supervisorEmail } = req.params;
+
+  const sqlQuery = `
+    SELECT COUNT(*) AS pending_count
+    FROM HoursRequests
+    WHERE supervisor_email = ? AND status = 'Pending';
+  `;
+
+  connection.query(sqlQuery, [supervisorEmail], (err, results) => {
+    if (err) {
+      console.error('Error counting pending requests:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    const count = results[0]?.pending_count || 0;
+    res.json({ pending_count: count });
+  });
+});
+
+//fetch requests for a volunteer
+app.get('/api/requests/volunteer/:email', (req, res) => {
+  const { email } = req.params;
+
+  const sqlQuery = `
+    SELECT id, class_name, date, from_time, to_time, activity, hours, status
+    FROM HoursRequests
+    WHERE volunteer_email = ?;
+  `;
+
+  connection.query(sqlQuery, [email], (err, results) => {
+    if (err) {
+      console.error('Error fetching requests for volunteer:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    res.json(results);
+  });
+});
+
+//Fetch Requests for a Supervisor
 
 app.get('/api/requests/:supervisorEmail', (req, res) => {
   const { supervisorEmail } = req.params;
@@ -370,6 +514,7 @@ app.get('/api/requests/:supervisorEmail', (req, res) => {
       hr.volunteer_email, 
       v.first_name AS volunteer_first_name, 
       v.last_name AS volunteer_last_name, 
+      hr.class_name, 
       hr.date, 
       hr.from_time, 
       hr.to_time, 
@@ -383,15 +528,13 @@ app.get('/api/requests/:supervisorEmail', (req, res) => {
 
   connection.query(sqlQuery, [supervisorEmail], (err, results) => {
     if (err) {
-      console.error('Error fetching requests:', err.message);
+      console.error('Error fetching requests for supervisor:', err.message);
       return res.status(500).json({ message: 'Database query error' });
     }
 
     res.json(results);
   });
 });
-
-
 
 app.put('/api/requests/:id', (req, res) => {
   const { id } = req.params;
@@ -449,7 +592,28 @@ app.put('/api/requests/:id', (req, res) => {
   });
 });
 
+//post hour request to the HoursRequest table
+app.post('/api/hours-requests', (req, res) => {
+  const { volunteer_email, supervisor_email, class_name, date, from_time, to_time, activity, hours, status } = req.body;
 
+  const sqlQuery = `
+    INSERT INTO HoursRequests (volunteer_email, supervisor_email, class_name, date, from_time, to_time, activity, hours, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+  `;
+
+  connection.query(
+    sqlQuery,
+    [volunteer_email, supervisor_email, class_name, date, from_time, to_time, activity, hours, status],
+    (err, results) => {
+      if (err) {
+        console.error('Error inserting hours request:', err.message);
+        return res.status(500).json({ message: 'Database insertion error' });
+      }
+
+      res.status(201).json({ message: 'Hours request submitted successfully', id: results.insertId });
+    }
+  );
+});
 
 app.get('/api/supervisor/:email', (req, res) => {
   const { email } = req.params;
@@ -502,28 +666,7 @@ app.get('/api/supervisors/by-volunteer/:volunteerEmail', (req, res) => {
 });
 
 
-//post hour request to the HoursRequest table
-app.post('/api/hours-requests', (req, res) => {
-  const { volunteer_email, supervisor_email, date, from_time, to_time, activity, hours, status } = req.body;
 
-  const sqlQuery = `
-    INSERT INTO HoursRequests (volunteer_email, supervisor_email, date, from_time, to_time, activity, hours, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-  `;
-
-  connection.query(
-    sqlQuery,
-    [volunteer_email, supervisor_email, date, from_time, to_time, activity, hours, status],
-    (err, results) => {
-      if (err) {
-        console.error('Error inserting hours request:', err.message);
-        return res.status(500).json({ message: 'Database insertion error' });
-      }
-
-      res.status(201).json({ message: 'Hours request submitted successfully' });
-    }
-  );
-});
 
 // Get user details by email (checks Supervisors, Volunteers, and Admins tables)
 app.get('/api/user/email/:email', (req, res) => {

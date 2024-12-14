@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { AuthContext } from './AuthContextProvider';
-import Dashboard from './Dashboard';
+import Dashboard from './Volunteer/Dashboard';
 import Login from './Login';
 
 const Home = () => {

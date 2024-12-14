@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import './VolunteerList.css';
+import '../VolunteerList.css';
 
-const VolunteerListAdmin = () => {
+const VolunteerList = () => {
   const [volunteers, setVolunteers] = useState([]); // List of all volunteers
   const [loading, setLoading] = useState(true); // Loading state
 
@@ -49,4 +49,4 @@ const VolunteerListAdmin = () => {
   );
 };
 
-export default VolunteerListAdmin;
+export default VolunteerList;
