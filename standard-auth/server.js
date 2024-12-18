@@ -23,10 +23,10 @@ let db;
 (async () => {
   try {
     db = await mysql.createPool({
-      host: process.env.MYSQL_HOST || 'localhost',
-      user: process.env.MYSQL_USER || 'root',
-      password: process.env.MYSQL_PASSWORD || 'password',
-      database: process.env.MYSQL_DATABASE || 'CPSPTest',
+      host: process.env.MYSQL_HOST,
+      user: process.env.MYSQL_USER,
+      password: process.env.MYSQL_PASSWORD,
+      database: process.env.MYSQL_DATABASE,
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,

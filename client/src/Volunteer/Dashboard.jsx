@@ -154,7 +154,7 @@ const Dashboard = () => {
   };
 
   if (loading) {
-    return <p>Loading dashboard...</p>;
+    return <p>You are not enrolled in a course</p>;
   }
 
   return (

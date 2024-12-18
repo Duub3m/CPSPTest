@@ -28,9 +28,9 @@ app.use(cookieParser()); // Parse cookies
 // MySQL Connection
 const connection = mysql.createConnection({
   host: 'localhost',
-  user: 'root', // Replace with your MySQL username
-  password: 'password', // Replace with your MySQL password
-  database: 'CPSPTest', // Replace with your database name
+  user: 'root', 
+  password: 'password', 
+  database: 'CPSPTest', 
 });
 
 // Connect to MySQL
@@ -43,6 +43,48 @@ connection.connect((err) => {
 });
 
 // Routes
+
+
+// Get approved logs for a specific class
+app.get('/api/logs', (req, res) => {
+  const { class_name } = req.query;
+
+  const sqlQuery = `
+    SELECT date, from_time, to_time, hours, activity
+    FROM HoursRequests
+    WHERE class_name = ? AND status = 'Approved'
+    ORDER BY date ASC;
+  `;
+
+  connection.query(sqlQuery, [class_name], (err, results) => {
+    if (err) {
+      console.error('Error fetching logs:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    res.json(results);
+  });
+});
+
+app.post('/api/volunteer-classes/check-enrollment', (req, res) => {
+  const { volunteer_email, course_name, semester } = req.body;
+
+  const sqlQuery = `
+    SELECT COUNT(*) AS count
+    FROM VolunteerClasses
+    WHERE volunteer_email = ? AND class_name = ? AND semester = ?;
+  `;
+
+  connection.query(sqlQuery, [volunteer_email, course_name, semester], (err, results) => {
+    if (err) {
+      console.error('Error checking enrollment:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    const isEnrolled = results[0].count > 0;
+    res.json({ isEnrolled });
+  });
+});
 
 // Check if a volunteer is already enrolled in a course
 app.post('/api/volunteer-classes/check-enrollment', (req, res) => {

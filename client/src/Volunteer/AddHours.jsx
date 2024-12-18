@@ -134,6 +134,22 @@ const AddHours = () => {
     <div className="add-hours-container">
       <h2>Submit Hours Request</h2>
       <form onSubmit={handleSubmit} className="add-hours-form">
+      <div>
+          <label>Class</label>
+          <select
+            name="class_name"
+            value={formData.class_name}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select a Class</option>
+            {classes.map((cls) => (
+              <option key={cls.class_name} value={cls.class_name}>
+                {cls.class_name} - {cls.class_description}
+              </option>
+            ))}
+          </select>
+        </div>
         <div>
           <label>Date</label>
           <input
@@ -174,22 +190,6 @@ const AddHours = () => {
             placeholder="Describe the activity"
             required
           />
-        </div>
-        <div>
-          <label>Class</label>
-          <select
-            name="class_name"
-            value={formData.class_name}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select a Class</option>
-            {classes.map((cls) => (
-              <option key={cls.class_name} value={cls.class_name}>
-                {cls.class_name} - {cls.class_description}
-              </option>
-            ))}
-          </select>
         </div>
         <button type="submit">Submit Request</button>
       </form>

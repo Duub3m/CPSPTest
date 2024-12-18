@@ -30,6 +30,7 @@ import Dashboard from './Volunteer/Dashboard';
 import VolunteerRequests from'./Volunteer/Requests';
 import VolunteerSupervisorList from './Volunteer/SupervisorList';
 import Registration from './Volunteer/Registration';
+import LogOfHours from './Volunteer/LogOfHours';
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
@@ -39,6 +40,7 @@ const router = createBrowserRouter([
   { path: '/login', element: <Login /> }, 
   { path: '/database', element: <Database /> }, 
   { path: '/Volunteer/Registration', element: <Registration /> }, 
+  { path: '/Volunteer/LogOfHours', element: <LogOfHours /> }, 
   { path: '/Supervisor/Requests', element: <SupervisorRequests /> }, 
   { path: '/Volunteer/Requests', element: <VolunteerRequests /> }, 
   { path: '/Profile2', element: <Profile2 /> }, 
