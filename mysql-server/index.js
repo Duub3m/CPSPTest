@@ -44,6 +44,62 @@ connection.connect((err) => {
 
 // Routes
 
+// Create a new notification
+app.post('/api/notifications', (req, res) => {
+  const { recipient_email, sender_email, notification_type, message } = req.body;
+
+  const sqlQuery = `
+    INSERT INTO Notifications (recipient_email, sender_email, notification_type, message)
+    VALUES (?, ?, ?, ?);
+  `;
+
+  connection.query(sqlQuery, [recipient_email, sender_email, notification_type, message], (err) => {
+    if (err) {
+      console.error('Error creating notification:', err.message);
+      return res.status(500).json({ message: 'Database insertion error' });
+    }
+    res.status(201).json({ message: 'Notification created successfully' });
+  });
+});
+
+// Fetch unread notifications for a user
+app.get('/api/notifications/:email', (req, res) => {
+  const { email } = req.params;
+
+  const sqlQuery = `
+    SELECT id, recipient_email, notification_type, message, is_read, created_at
+    FROM Notifications
+    WHERE recipient_email = ? AND is_read = FALSE
+    ORDER BY created_at DESC;
+  `;
+
+  connection.query(sqlQuery, [email], (err, results) => {
+    if (err) {
+      console.error('Error fetching notifications:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+    res.json(results);
+  });
+});
+
+// Mark a notification as read
+app.put('/api/notifications/read/:id', (req, res) => {
+  const { id } = req.params;
+
+  const sqlQuery = `
+    UPDATE Notifications
+    SET is_read = TRUE
+    WHERE id = ?;
+  `;
+
+  connection.query(sqlQuery, [id], (err, results) => {
+    if (err) {
+      console.error('Error marking notification as read:', err.message);
+      return res.status(500).json({ message: 'Database update error' });
+    }
+    res.json({ message: 'Notification marked as read' });
+  });
+});
 
 // Get approved logs for a specific class
 app.get('/api/logs', (req, res) => {
@@ -155,30 +211,63 @@ app.get('/api/admin/requests/count', (req, res) => {
 
 // Create a new registration request
 app.post('/api/registration-requests', (req, res) => {
-  const { volunteer_email, first_name, last_name, semester, year, course_name, organization } = req.body;
+  const { volunteer_email, first_name, last_name, semester, year, course_name, organization, supervisor_email } = req.body;
 
-  if (!volunteer_email || !first_name || !last_name || !semester || !year || !course_name || !organization) {
-    return res.status(400).json({ message: 'Missing required fields' });
+  const sqlQuery = `
+    INSERT INTO RegistrationRequests (volunteer_email, first_name, last_name, semester, year, course_name, organization, supervisor_email, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Pending Supervisor Approval');
+  `;
+
+  connection.query(sqlQuery, [
+    volunteer_email,
+    first_name,
+    last_name,
+    semester,
+    year,
+    course_name,
+    organization,
+    supervisor_email,
+  ], (err) => {
+    if (err) {
+      console.error('Error creating registration request:', err.message);
+      return res.status(500).json({ message: 'Database insertion error' });
+    }
+
+    // Respond with success once the request is added to the database
+    res.status(201).json({ message: 'Registration request submitted successfully.' });
+  });
+});
+
+
+app.put('/api/supervisor/requests/:id/approval', (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!['Pending Admin Approval', 'Rejected'].includes(status)) {
+    return res.status(400).json({ message: 'Invalid status value' });
   }
 
   const sqlQuery = `
-    INSERT INTO RegistrationRequests (volunteer_email, first_name, last_name, semester, year, course_name, organization)
-    VALUES (?, ?, ?, ?, ?, ?, ?);
+    UPDATE RegistrationRequests
+    SET status = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ? AND status = 'Pending Supervisor Approval';
   `;
 
-  connection.query(
-    sqlQuery,
-    [volunteer_email, first_name, last_name, semester, year, course_name, organization],
-    (err, results) => {
-      if (err) {
-        console.error('Error inserting registration request:', err.message);
-        return res.status(500).json({ message: 'Database insertion error' });
-      }
-
-      res.status(201).json({ message: 'Registration request submitted successfully', id: results.insertId });
+  connection.query(sqlQuery, [status, id], (err, results) => {
+    if (err) {
+      console.error('Error updating supervisor request:', err.message);
+      return res.status(500).json({ message: 'Database update error' });
     }
-  );
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'Request not found or already processed.' });
+    }
+
+    res.json({ message: `Request ${status === 'Pending Admin Approval' ? 'approved' : 'rejected'} successfully.` });
+  });
 });
+
+
 
 // Get all registration requests (Admin only)
 app.get('/api/registration-requests', (req, res) => {
@@ -259,6 +348,55 @@ app.put('/api/registration-requests/:id', (req, res) => {
   });
 });
 
+// Approve or Reject a registration request (Supervisor only)
+app.put('/api/registration-requests/supervisor/:volunteer_email', (req, res) => {
+  const { volunteer_email } = req.params;
+  const { status, supervisor_email } = req.body;
+
+  if (!['Pending Admin Approval', 'Rejected'].includes(status)) {
+    return res.status(400).json({ message: 'Invalid status value' });
+  }
+
+  const updateQuery = `
+    UPDATE RegistrationRequests
+    SET status = ?, supervisor_email = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE volunteer_email = ? AND status = 'Pending Supervisor Approval';
+  `;
+
+  connection.query(updateQuery, [status, supervisor_email, volunteer_email], (err, results) => {
+    if (err) {
+      console.error('Error updating registration request status:', err.message);
+      return res.status(500).json({ message: 'Database update error' });
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'Registration request not found or already processed' });
+    }
+
+    res.json({ message: `Request ${status.toLowerCase()} successfully by the supervisor` });
+  });
+});
+
+
+// Get registration requests for a specific supervisor
+app.get('/api/registration-requests/supervisor/:supervisorEmail', (req, res) => {
+  const { supervisorEmail } = req.params;
+
+  const sqlQuery = `
+    SELECT * FROM RegistrationRequests
+    WHERE supervisor_email = ? AND status = 'Pending Supervisor Approval'
+    ORDER BY created_at DESC;
+  `;
+
+  connection.query(sqlQuery, [supervisorEmail], (err, results) => {
+    if (err) {
+      console.error('Error fetching registration requests for supervisor:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    res.json(results);
+  });
+});
 
 // Get registration requests for a specific volunteer
 app.get('/api/registration-requests/volunteer/:volunteerEmail', (req, res) => {

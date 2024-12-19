@@ -1,0 +1,64 @@
+.notifications-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #fff;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    width: 300px;
+    padding: 10px;
+    z-index: 1000;
+  }
+  
+  .notifications-container h3 {
+    margin: 0;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+  }
+  
+  .notification-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f4f4f4;
+  }
+  
+  .notification-item:last-child {
+    border-bottom: none;
+  }
+  
+  .notification-item p {
+    margin: 0;
+    font-size: 14px;
+  }
+  
+  .notification-item button {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+  
+  .notification-item button:hover {
+    background-color: #45a049;
+  }
+  
+  .notification-item.Request {
+    border-left: 4px solid #ff9800;
+  }
+  
+  .notification-item.Approval {
+    border-left: 4px solid #4caf50;
+  }
+  
+  .notification-item.Rejection {
+    border-left: 4px solid #f44336;
+  }
+  
+  .notification-item.Message {
+    border-left: 4px solid #2196f3;
+  }
+  

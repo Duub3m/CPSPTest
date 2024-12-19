@@ -84,6 +84,7 @@ const Navbar = ({ role, handleLogout }) => {
             <li><Link to="/Volunteer/SupervisorList">Supervisor List</Link></li>
             <li><Link to="/Volunteer/Registration">Registration</Link></li>
             <li><Link to="/Volunteer/LogOfHours">Log of Hours</Link></li>
+            <li><Link to="/Volunteer/Notifications">Notifications</Link></li>
           </>
         )}
         {role === 'Supervisor' && (

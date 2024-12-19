@@ -31,6 +31,7 @@ import VolunteerRequests from'./Volunteer/Requests';
 import VolunteerSupervisorList from './Volunteer/SupervisorList';
 import Registration from './Volunteer/Registration';
 import LogOfHours from './Volunteer/LogOfHours';
+import VolunteerNotifications from './Volunteer/Notifications';
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
@@ -52,6 +53,7 @@ const router = createBrowserRouter([
   { path: '/Admin/Requests', element: <AdminRequests /> },
   { path: '/Admin/VolunteerList', element: <AdminVolunteerList /> },
   { path: '/Admin/SupervisorList', element: <AdminSupervisorList /> },
+  { path: '/Volunteer/Notifications', element: <VolunteerNotifications /> },
 ]);
 
 function App() {

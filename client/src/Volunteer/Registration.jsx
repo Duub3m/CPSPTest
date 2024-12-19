@@ -21,6 +21,7 @@ const Registration = () => {
     year: "",
     course: "",
     organization: "",
+    supervisorEmail: "",
   });
 
   const [isPageValid, setIsPageValid] = useState(false); // Validation for the current page
@@ -101,6 +102,8 @@ const Registration = () => {
         year: formData.year,
         course_name: formData.course,
         organization: formData.organization,
+        supervisor_email: formData.supervisorEmail,
+        status: "Pending Supervisor Approval", // Initial status for supervisor approval
       };
   
       // Submit the registration request
@@ -119,15 +122,16 @@ const Registration = () => {
         throw new Error("Failed to submit registration request.");
       }
   
-      alert("Thank you for submitting your Registration Request! One of our CPSP staff will review it and get back to you shortly");
+      alert(
+        "Your registration request has been submitted. It is pending approval from your supervisor."
+      );
       navigate("/Profile"); // Redirect to the Profile page
     } catch (error) {
       console.error("Error submitting registration request:", error);
       alert("An error occurred during registration. Please try again.");
     }
-  };
+  };  
   
-
   // Validate fields on the current page
   useEffect(() => {
     const validatePage = () => {
@@ -135,7 +139,7 @@ const Registration = () => {
         1: ["firstName", "lastName", "gender", "age", "ethnicity"],
         2: ["ualbanyEmail", "personalEmail", "phoneNumber"],
         3: ["ualbanyId", "academicStanding", "major"],
-        4: ["semester", "year", "course", "organization"],
+        4: ["semester", "year", "course", "organization", "supervisorEmail"],
       };
 
       const currentPageFields = requiredFields[page];
@@ -347,6 +351,16 @@ const Registration = () => {
                 type="text"
                 name="organization"
                 value={formData.organization}
+                onChange={handleInputChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Supervisors Email</label>
+              <input
+                type="text"
+                name="supervisorEmail"
+                value={formData.supervisorEmail}
                 onChange={handleInputChange}
                 required
               />

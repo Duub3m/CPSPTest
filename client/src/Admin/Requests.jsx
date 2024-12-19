@@ -28,11 +28,13 @@ const Requests = () => {
     fetchAdminEmail();
   }, []);
 
-  // Fetch all registration requests
+  // Fetch registration requests pending admin approval
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/registration-requests`);
+        const response = await fetch(
+          `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/registration-requests?status=Pending Admin Approval`
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch registration requests.");
         }
@@ -78,7 +80,7 @@ const Requests = () => {
     <div className="admin-requests-container">
       <h1>Registration Requests</h1>
       {requests.length === 0 ? (
-        <p>No pending registration requests.</p>
+        <p>No pending registration requests for admin approval.</p>
       ) : (
         <table className="requests-table">
           <thead>
@@ -91,6 +93,7 @@ const Requests = () => {
               <th>Year</th>
               <th>Organization</th>
               <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -105,7 +108,7 @@ const Requests = () => {
                 <td>{request.organization}</td>
                 <td className={`status ${request.status.toLowerCase()}`}>{request.status}</td>
                 <td>
-                  {request.status === "Pending" && (
+                  {request.status === "Pending Admin Approval" && (
                     <>
                       <button
                         onClick={() => handleAction(request.id, "Approved")}
