@@ -6,9 +6,11 @@ import cpspLogo from './cpsp.png';
 const Navbar = ({ role, handleLogout }) => {
   const [pendingRequestCount, setPendingRequestCount] = useState(0); // For Supervisors
   const [adminRequestCount, setAdminRequestCount] = useState(0); // For Admins
+  const [notificationCount, setNotificationCount] = useState(0); // Notification count for all users
 
+  // Fetch counts for requests and notifications
   useEffect(() => {
-    const fetchPendingRequestCount = async () => {
+    const fetchCounts = async () => {
       try {
         // Fetch logged-in user's email
         const userResponse = await fetch(`${process.env.REACT_APP_SERVER_URL}/auth/logged_in`, {
@@ -50,14 +52,24 @@ const Navbar = ({ role, handleLogout }) => {
           const data = await response.json();
           setAdminRequestCount(data.pending_count);
         }
+
+        // Fetch unread notifications count for the user
+        const notificationResponse = await fetch(
+          `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/notifications/count/${userEmail}`
+        );
+
+        if (!notificationResponse.ok) {
+          throw new Error('Failed to fetch notification count');
+        }
+
+        const notificationData = await notificationResponse.json();
+        setNotificationCount(notificationData.unread_count);
       } catch (error) {
-        console.error('Error fetching request counts:', error);
+        console.error('Error fetching counts:', error);
       }
     };
 
-    if (role === 'Supervisor' || role === 'Admin') {
-      fetchPendingRequestCount();
-    }
+    fetchCounts();
   }, [role]);
 
   return (
@@ -84,7 +96,6 @@ const Navbar = ({ role, handleLogout }) => {
             <li><Link to="/Volunteer/SupervisorList">Supervisor List</Link></li>
             <li><Link to="/Volunteer/Registration">Registration</Link></li>
             <li><Link to="/Volunteer/LogOfHours">Log of Hours</Link></li>
-            <li><Link to="/Volunteer/Notifications">Notifications</Link></li>
           </>
         )}
         {role === 'Supervisor' && (
@@ -109,6 +120,11 @@ const Navbar = ({ role, handleLogout }) => {
           </>
         )}
         <li><Link to="/Messaging">Messages</Link></li>
+        <li>
+          <Link to="/Notifications">
+            Notifications {notificationCount > 0 && <span>{notificationCount}</span>}
+          </Link>
+        </li>
         <li>
           <button className="btn-logout" onClick={handleLogout}>
             Logout

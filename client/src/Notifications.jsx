@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import '../Notifications.css';
+import './Notifications.css';
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [recipientEmail, setRecipientEmail] = useState('');
+  const [receiverEmail, setreceiverEmail] = useState('');
 
   // Fetch logged-in user and notifications
   useEffect(() => {
@@ -18,14 +18,13 @@ const Notifications = () => {
         const userData = await userResponse.json();
 
         if (!userData.loggedIn) {
-          console.error('User not logged in');
           setError('You need to be logged in to view notifications.');
           setLoading(false);
           return;
         }
 
         const email = userData.user.email;
-        setRecipientEmail(email);
+        setreceiverEmail(email);
 
         // Fetch unread notifications for the user
         const notificationsResponse = await fetch(
@@ -40,7 +39,7 @@ const Notifications = () => {
         setNotifications(data);
       } catch (error) {
         console.error('Error fetching notifications:', error);
-        setError('Failed to load notifications.');
+        setError('Failed to load notifications. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -70,20 +69,20 @@ const Notifications = () => {
     <div className="notifications-container">
       <h3>Notifications</h3>
       {loading ? (
-        <p>Loading...</p>
+        <p>Loading notifications...</p>
       ) : error ? (
         <p className="error-message">{error}</p>
       ) : notifications.length === 0 ? (
         <p>No new notifications</p>
       ) : (
-        <ul>
+        <ul className="notifications-list">
           {notifications.map((notification) => (
             <li
               key={notification.id}
               className={`notification-item ${notification.notification_type}`}
               style={{
                 borderLeft: `5px solid ${
-                  notification.notification_type === 'Request'
+                  notification.notification_type === 'Message'
                     ? 'blue'
                     : notification.notification_type === 'Approval'
                     ? 'green'
@@ -93,9 +92,17 @@ const Notifications = () => {
                 }`,
               }}
             >
-              <p>{notification.message}</p>
-              <small>{new Date(notification.created_at).toLocaleString()}</small>
-              <button onClick={() => markAsRead(notification.id)}>Mark as Read</button>
+              <div className="notification-content">
+                <p><strong>Message:</strong> {notification.message}</p>
+                <p><strong>Sender:</strong> {notification.sender_email}</p>
+                <small>{new Date(notification.created_at).toLocaleString()}</small>
+              </div>
+              <button
+                className="mark-as-read-btn"
+                onClick={() => markAsRead(notification.id)}
+              >
+                Mark as Read
+              </button>
             </li>
           ))}
         </ul>

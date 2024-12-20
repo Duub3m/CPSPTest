@@ -9,13 +9,22 @@ const LogOfHours = () => {
   const [semester, setSemester] = useState('');
   const [organization, setOrganization] = useState('');
   const [supervisorName, setSupervisorName] = useState(''); // Supervisor name
+  const [volunteerEmail, setVolunteerEmail] = useState(''); // Volunteer email
   const [volunteerName, setVolunteerName] = useState(''); // Volunteer name
 
-  // Fetch classes and user details
+  // Utility function to format time to 12-hour format
+  const formatTime = (time) => {
+    const [hours, minutes, seconds] = time.split(':');
+    const intHours = parseInt(hours, 10);
+    const period = intHours >= 12 ? 'PM' : 'AM';
+    const formattedHours = intHours % 12 || 12; // Convert 0 to 12
+    return `${formattedHours}:${minutes} ${period}`;
+  };
+
+  // Fetch user details and classes
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch logged-in user details
         const userResponse = await fetch(`${process.env.REACT_APP_SERVER_URL}/auth/logged_in`, {
           credentials: 'include',
         });
@@ -27,36 +36,28 @@ const LogOfHours = () => {
         }
 
         setVolunteerName(`${userData.user.first_name} ${userData.user.last_name}`);
+        setVolunteerEmail(userData.user.email);
 
-        // Fetch supervisor details
-        const supervisorResponse = await fetch(
-          `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisors/by-volunteer/${userData.user.email}`
-        );
-        const supervisorData = await supervisorResponse.json();
-
-        if (supervisorData.length > 0) {
-          const { supervisor_first_name, supervisor_last_name } = supervisorData[0];
-          setSupervisorName(`${supervisor_first_name} ${supervisor_last_name}`);
-        }
-
-        // Fetch enrolled classes
         const classesResponse = await fetch(
           `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/volunteer-classes/${userData.user.email}`
         );
-        if (!classesResponse.ok) {
-          throw new Error('Failed to fetch classes');
-        }
-
+        if (!classesResponse.ok) throw new Error('Failed to fetch classes');
         const classesData = await classesResponse.json();
         setClasses(classesData);
 
         if (classesData.length > 0) {
-          setSelectedClass(classesData[0].class_name); // Default to the first class
-          setSemester(classesData[0].semester); // Default semester
-          setOrganization(classesData[0].organization); // Default organization
+          const defaultClass = classesData[0];
+          setSelectedClass(defaultClass.class_name);
+          setSemester(defaultClass.semester);
+          setOrganization(defaultClass.organization);
+
+          // Fetch supervisor for the default class's organization
+          fetchSupervisor(userData.user.email, defaultClass.organization);
         }
       } catch (error) {
         console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -72,25 +73,48 @@ const LogOfHours = () => {
         const response = await fetch(
           `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/logs?class_name=${selectedClass}`
         );
-        if (!response.ok) {
-          throw new Error('Failed to fetch logs');
-        }
-
+        if (!response.ok) throw new Error('Failed to fetch logs');
         const data = await response.json();
         setLogs(data);
       } catch (error) {
         console.error('Error fetching logs:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchLogs();
   }, [selectedClass]);
 
-  if (loading) {
-    return <p>Loading logs...</p>;
-  }
+  // Fetch supervisor details for a specific organization
+  const fetchSupervisor = async (email, organization) => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisor-details/${email}/${organization}`
+      );
+      const data = await response.json();
+
+      if (response.ok && data) {
+        setSupervisorName(`${data.first_name} ${data.last_name}`);
+      } else {
+        setSupervisorName('No supervisor assigned');
+      }
+    } catch (error) {
+      console.error('Error fetching supervisor details:', error);
+      setSupervisorName('Error fetching supervisor');
+    }
+  };
+
+  // Handle class selection change
+  const handleClassChange = (e) => {
+    const selected = classes.find((c) => c.class_name === e.target.value);
+    setSelectedClass(selected.class_name);
+    setSemester(selected.semester);
+    setOrganization(selected.organization);
+
+    // Fetch supervisor details for the newly selected class's organization
+    fetchSupervisor(volunteerEmail, selected.organization);
+  };
+
+  if (loading) return <p>Loading logs...</p>;
 
   return (
     <div className="log-of-hours-container">
@@ -103,16 +127,7 @@ const LogOfHours = () => {
 
       <div className="class-selector">
         <label htmlFor="class-select">Select Class:</label>
-        <select
-          id="class-select"
-          value={selectedClass}
-          onChange={(e) => {
-            const selected = classes.find((c) => c.class_name === e.target.value);
-            setSelectedClass(selected.class_name);
-            setSemester(selected.semester);
-            setOrganization(selected.organization);
-          }}
-        >
+        <select id="class-select" value={selectedClass} onChange={handleClassChange}>
           {classes.map((classItem) => (
             <option key={classItem.class_name} value={classItem.class_name}>
               {classItem.class_name}
@@ -141,7 +156,7 @@ const LogOfHours = () => {
             logs.map((log, index) => (
               <tr key={log.id}>
                 <td>{new Date(log.date).toLocaleDateString()}</td>
-                <td>{`${log.from_time} - ${log.to_time}`}</td>
+                <td>{`${formatTime(log.from_time)} - ${formatTime(log.to_time)}`}</td>
                 <td>{log.hours}</td>
                 <td>{log.activity}</td>
                 <td>{logs.slice(0, index + 1).reduce((sum, item) => sum + item.hours, 0)}</td>

@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import '../Requests.css';
 
 const Requests = () => {
-  const [requests, setRequests] = useState([]);
+  const [registrationRequests, setRegistrationRequests] = useState([]);
+  const [hoursRequests, setHoursRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState(null); // Supervisor email
 
-  // Fetch logged-in supervisor email and registration requests
+  // Fetch supervisor email and requests
   useEffect(() => {
-    const fetchSupervisorEmailAndRequests = async () => {
+    const fetchRequests = async () => {
       try {
         // Fetch logged-in supervisor email
         const userResponse = await fetch(`${process.env.REACT_APP_SERVER_URL}/auth/logged_in`, {
@@ -23,15 +24,26 @@ const Requests = () => {
 
         setEmail(userData.user.email);
 
-        // Fetch registration requests for the supervisor
-        const requestsResponse = await fetch(
+        // Fetch registration requests
+        const regRequestsResponse = await fetch(
           `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/registration-requests/supervisor/${userData.user.email}`
         );
-        if (!requestsResponse.ok) throw new Error('Failed to fetch registration requests');
+        if (!regRequestsResponse.ok) throw new Error('Failed to fetch registration requests');
+        const regRequestsData = await regRequestsResponse.json();
 
-        const requestsData = await requestsResponse.json();
-        const sortedRequests = requestsData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        setRequests(sortedRequests);
+        // Fetch logged hours requests
+        const hoursRequestsResponse = await fetch(
+          `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/hours-requests/supervisor/${userData.user.email}`
+        );
+        if (!hoursRequestsResponse.ok) throw new Error('Failed to fetch hours requests');
+        const hoursRequestsData = await hoursRequestsResponse.json();
+
+        // Filter requests with the status 'Pending'
+        const pendingRegRequests = regRequestsData.filter((request) => request.status === 'Pending Supervisor Approval');
+        const pendingHoursRequests = hoursRequestsData.filter((request) => request.status === 'Pending');
+
+        setRegistrationRequests(pendingRegRequests);
+        setHoursRequests(pendingHoursRequests);
       } catch (error) {
         console.error('Error fetching requests:', error);
       } finally {
@@ -39,35 +51,66 @@ const Requests = () => {
       }
     };
 
-    fetchSupervisorEmailAndRequests();
+    fetchRequests();
   }, []);
 
-  // Handle approval or rejection of requests
-  const handleRequestAction = async (volunteerEmail, status) => {
+  // Helper function to convert military time to 12-hour format with AM/PM
+  const formatTime = (time) => {
+    const [hours, minutes] = time.split(':');
+    const intHours = parseInt(hours, 10);
+    const period = intHours >= 12 ? 'PM' : 'AM';
+    const formattedHours = intHours % 12 || 12; // Convert 0 or 12 to 12
+    return `${formattedHours}:${minutes} ${period}`;
+  };
+
+  // Handle approval or rejection of registration requests
+  const handleRequestAction = async (requestId, status) => {
     try {
-      // Update request status via API
       const response = await fetch(
-        `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/registration-requests/supervisor/${volunteerEmail}`,
+        `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/registration-requests/supervisor/${email}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status, supervisor_email: email }),
+          body: JSON.stringify({ status, request_id: requestId }),
         }
       );
 
-      if (!response.ok) throw new Error(`Failed to ${status.toLowerCase()} request`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API Error Response:', errorData);
+        throw new Error(`Failed to ${status.toLowerCase()} registration request`);
+      }
 
-      // Update the requests list locally after approval or rejection
-      setRequests((prevRequests) => prevRequests.filter((request) => request.volunteer_email !== volunteerEmail));
-
-      // Display success message
-      alert(
-        status === 'Pending Admin Approval'
-          ? `Request approved successfully. It has been forwarded to the admin for final approval.`
-          : `Request rejected successfully.`
+      setRegistrationRequests((prevRequests) =>
+        prevRequests.filter((request) => request.id !== requestId)
       );
+      alert(`Registration request ${status.toLowerCase()} successfully.`);
     } catch (error) {
-      console.error(`Error processing request:`, error);
+      console.error('Error processing registration request:', error);
+      alert('An error occurred. Please try again.');
+    }
+  };
+
+  // Handle approval or rejection of hours requests
+  const handleHoursRequestAction = async (requestId, status) => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/requests/supervisor/${email}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status, request_id: requestId }),
+        }
+      );
+
+      if (!response.ok) throw new Error(`Failed to ${status.toLowerCase()} hours request`);
+
+      setHoursRequests((prevRequests) =>
+        prevRequests.filter((request) => request.id !== requestId)
+      );
+      alert(`Hours request ${status.toLowerCase()} successfully.`);
+    } catch (error) {
+      console.error(`Error processing hours request:`, error);
       alert(`An error occurred. Please try again.`);
     }
   };
@@ -84,12 +127,15 @@ const Requests = () => {
   return (
     <div className="requests-container">
       <h2>Pending Supervisor Approvals</h2>
-      {requests.length === 0 ? (
-        <p>No pending requests at the moment.</p>
+
+      {/* Registration Requests */}
+      <h3>Registration Requests</h3>
+      {registrationRequests.length === 0 ? (
+        <p>No pending registration requests.</p>
       ) : (
         <ul className="requests-list">
-          {requests.map((request) => (
-            <li key={request.volunteer_email} className="request-item">
+          {registrationRequests.map((request) => (
+            <li key={request.id} className="request-item">
               <p>
                 <strong>Volunteer Name:</strong> {request.first_name} {request.last_name}
               </p>
@@ -110,15 +156,61 @@ const Requests = () => {
               </p>
               <div className="actions">
                 <button
-                  onClick={() =>
-                    handleRequestAction(request.volunteer_email, 'Pending Admin Approval')
-                  }
+                  onClick={() => handleRequestAction(request.id, 'Pending Admin Approval')}
                   className="approve-btn"
                 >
                   Approve
                 </button>
                 <button
-                  onClick={() => handleRequestAction(request.volunteer_email, 'Rejected')}
+                  onClick={() => handleRequestAction(request.id, 'Rejected')}
+                  className="reject-btn"
+                >
+                  Reject
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Hours Requests */}
+      <h3>Logged Hours Requests</h3>
+      {hoursRequests.length === 0 ? (
+        <p>No pending hours requests.</p>
+      ) : (
+        <ul className="requests-list">
+          {hoursRequests.map((request) => (
+            <li key={request.id} className="request-item">
+              <p>
+                <strong>Volunteer Name:</strong> {request.first_name} {request.last_name}
+              </p>
+              <p>
+                <strong>Class:</strong> {request.class_name}
+              </p>
+              <p>
+                <strong>Date:</strong> {formatDate(request.date)}
+              </p>
+              <p>
+                <strong>Time:</strong> {formatTime(request.from_time)} - {formatTime(request.to_time)}
+              </p>
+              <p>
+                <strong>Hours:</strong> {request.hours}
+              </p>
+              <p>
+                <strong>Activity:</strong> {request.activity}
+              </p>
+              <p>
+                <strong>Status:</strong> {request.status}
+              </p>
+              <div className="actions">
+                <button
+                  onClick={() => handleHoursRequestAction(request.id, 'Approved')}
+                  className="approve-btn"
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={() => handleHoursRequestAction(request.id, 'Rejected')}
                   className="reject-btn"
                 >
                   Reject

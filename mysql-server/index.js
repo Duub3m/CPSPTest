@@ -44,16 +44,96 @@ connection.connect((err) => {
 
 // Routes
 
-// Create a new notification
-app.post('/api/notifications', (req, res) => {
-  const { recipient_email, sender_email, notification_type, message } = req.body;
+// Get logged hours requests for a supervisor
+app.get('/api/hours-requests/supervisor/:supervisorEmail', (req, res) => {
+  const { supervisorEmail } = req.params;
 
   const sqlQuery = `
-    INSERT INTO Notifications (recipient_email, sender_email, notification_type, message)
+    SELECT hr.*, v.first_name, v.last_name, vc.class_name
+    FROM HoursRequests hr
+    JOIN VolunteerClasses vc ON hr.class_name = vc.class_name AND hr.volunteer_email = vc.volunteer_email
+    JOIN Volunteers v ON hr.volunteer_email = v.email
+    WHERE hr.supervisor_email = ?
+    ORDER BY hr.created_at DESC;
+  `;
+
+  connection.query(sqlQuery, [supervisorEmail], (err, results) => {
+    if (err) {
+      console.error('Error fetching hours requests for supervisor:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    res.json(results);
+  });
+});
+
+
+// Get supervisor email for a volunteer's class and organization
+app.get('/api/supervisor-email/:volunteerEmail/:className', (req, res) => {
+  const { volunteerEmail, className } = req.params;
+
+  const sqlQuery = `
+    SELECT sv.supervisor_email
+    FROM SupervisorVolunteer sv
+    JOIN VolunteerClasses vc ON sv.volunteer_email = vc.volunteer_email AND sv.organization = vc.organization
+    WHERE vc.volunteer_email = ? AND vc.class_name = ?;
+  `;
+
+  connection.query(sqlQuery, [volunteerEmail, className], (err, results) => {
+    if (err) {
+      console.error('Error fetching supervisor email:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'No supervisor found for the selected class and organization' });
+    }
+
+    res.json({ supervisor_email: results[0].supervisor_email });
+  });
+});
+
+// Get supervisor details for a volunteer and organization
+app.get('/api/supervisor-details/:volunteerEmail/:organization', (req, res) => {
+  const { volunteerEmail, organization } = req.params;
+
+  const sqlQuery = `
+    SELECT s.first_name, s.last_name
+    FROM SupervisorVolunteer sv
+    JOIN Supervisors s ON sv.supervisor_email = s.email
+    WHERE sv.volunteer_email = ? AND sv.organization = ?;
+  `;
+
+  connection.query(sqlQuery, [volunteerEmail, organization], (err, results) => {
+    if (err) {
+      console.error('Error fetching supervisor details:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'No supervisor found for the volunteer in this organization' });
+    }
+
+    res.json(results[0]);
+  });
+});
+
+// Create a new notification
+app.post('/api/notifications', (req, res) => {
+  const { receiver_email, sender_email, notification_type, message } = req.body;
+
+  // Check for missing fields
+  if (!receiver_email || !sender_email || !notification_type || !message) {
+    console.error('Missing fields in notification:', { receiver_email, sender_email, notification_type, message });
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  const sqlQuery = `
+    INSERT INTO Notifications (receiver_email, sender_email, notification_type, message)
     VALUES (?, ?, ?, ?);
   `;
 
-  connection.query(sqlQuery, [recipient_email, sender_email, notification_type, message], (err) => {
+  connection.query(sqlQuery, [receiver_email, sender_email, notification_type, message], (err) => {
     if (err) {
       console.error('Error creating notification:', err.message);
       return res.status(500).json({ message: 'Database insertion error' });
@@ -62,14 +142,33 @@ app.post('/api/notifications', (req, res) => {
   });
 });
 
+// Fetch unread notification count for a user
+app.get('/api/notifications/count/:email', (req, res) => {
+  const { email } = req.params;
+
+  const sqlQuery = `
+    SELECT COUNT(*) AS unread_count
+    FROM Notifications
+    WHERE receiver_email = ? AND is_read = FALSE;
+  `;
+
+  connection.query(sqlQuery, [email], (err, results) => {
+    if (err) {
+      console.error('Error fetching notification count:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+    res.json({ unread_count: results[0].unread_count });
+  });
+});
+
 // Fetch unread notifications for a user
 app.get('/api/notifications/:email', (req, res) => {
   const { email } = req.params;
 
   const sqlQuery = `
-    SELECT id, recipient_email, notification_type, message, is_read, created_at
+    SELECT id, receiver_email, sender_email, notification_type, message, is_read, created_at
     FROM Notifications
-    WHERE recipient_email = ? AND is_read = FALSE
+    WHERE receiver_email = ? AND is_read = FALSE
     ORDER BY created_at DESC;
   `;
 
@@ -100,6 +199,7 @@ app.put('/api/notifications/read/:id', (req, res) => {
     res.json({ message: 'Notification marked as read' });
   });
 });
+
 
 // Get approved logs for a specific class
 app.get('/api/logs', (req, res) => {
@@ -348,34 +448,71 @@ app.put('/api/registration-requests/:id', (req, res) => {
   });
 });
 
-// Approve or Reject a registration request (Supervisor only)
-app.put('/api/registration-requests/supervisor/:volunteer_email', (req, res) => {
-  const { volunteer_email } = req.params;
-  const { status, supervisor_email } = req.body;
+// Approve a registration request and add to SupervisorVolunteer table
+app.put('/api/registration-requests/supervisor/:supervisorEmail', (req, res) => {
+  const { supervisorEmail } = req.params;
+  const { status, volunteer_email } = req.body;
 
   if (!['Pending Admin Approval', 'Rejected'].includes(status)) {
     return res.status(400).json({ message: 'Invalid status value' });
   }
 
-  const updateQuery = `
+  const updateRequestQuery = `
     UPDATE RegistrationRequests
-    SET status = ?, supervisor_email = ?, updated_at = CURRENT_TIMESTAMP
-    WHERE volunteer_email = ? AND status = 'Pending Supervisor Approval';
+    SET status = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE volunteer_email = ? AND supervisor_email = ?;
   `;
 
-  connection.query(updateQuery, [status, supervisor_email, volunteer_email], (err, results) => {
+  connection.query(updateRequestQuery, [status, volunteer_email, supervisorEmail], (err, results) => {
     if (err) {
       console.error('Error updating registration request status:', err.message);
       return res.status(500).json({ message: 'Database update error' });
     }
 
     if (results.affectedRows === 0) {
-      return res.status(404).json({ message: 'Registration request not found or already processed' });
+      return res.status(404).json({ message: 'Registration request not found' });
     }
 
-    res.json({ message: `Request ${status.toLowerCase()} successfully by the supervisor` });
+    if (status === 'Pending Admin Approval') {
+      const selectOrganizationQuery = `
+        SELECT organization
+        FROM RegistrationRequests
+        WHERE volunteer_email = ? AND supervisor_email = ?;
+      `;
+
+      connection.query(selectOrganizationQuery, [volunteer_email, supervisorEmail], (err, rows) => {
+        if (err) {
+          console.error('Error fetching organization:', err.message);
+          return res.status(500).json({ message: 'Database query error' });
+        }
+
+        if (rows.length === 0) {
+          return res.status(404).json({ message: 'No matching registration request found' });
+        }
+
+        const { organization } = rows[0];
+
+        const insertSupervisorVolunteerQuery = `
+          INSERT INTO SupervisorVolunteer (supervisor_email, volunteer_email, organization)
+          VALUES (?, ?, ?)
+          ON DUPLICATE KEY UPDATE organization = VALUES(organization);
+        `;
+
+        connection.query(insertSupervisorVolunteerQuery, [supervisorEmail, volunteer_email, organization], (err) => {
+          if (err) {
+            console.error('Error inserting into SupervisorVolunteer:', err.message);
+            return res.status(500).json({ message: 'Database insertion error' });
+          }
+
+          res.json({ message: 'Request approved, and details added to SupervisorVolunteer table.' });
+        });
+      });
+    } else {
+      res.json({ message: 'Request rejected successfully.' });
+    }
   });
 });
+
 
 
 // Get registration requests for a specific supervisor
@@ -716,9 +853,9 @@ app.get('/api/requests/:supervisorEmail', (req, res) => {
   });
 });
 
-app.put('/api/requests/:id', (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
+app.put('/api/requests/supervisor/:email', (req, res) => {
+  const { email } = req.params; // Supervisor's email
+  const { status, request_id } = req.body; // Unique ID for the request
 
   if (!['Approved', 'Rejected'].includes(status)) {
     return res.status(400).json({ message: 'Invalid status value' });
@@ -727,23 +864,28 @@ app.put('/api/requests/:id', (req, res) => {
   const updateQuery = `
     UPDATE HoursRequests
     SET status = ?
-    WHERE id = ?;
+    WHERE id = ? AND supervisor_email = ?;
   `;
 
-  connection.query(updateQuery, [status, id], async (err, results) => {
+  connection.query(updateQuery, [status, request_id, email], (err, results) => {
     if (err) {
       console.error('Error updating request status:', err.message);
       return res.status(500).json({ message: 'Database update error' });
     }
 
     if (results.affectedRows === 0) {
-      return res.status(404).json({ message: 'Request not found' });
+      return res.status(404).json({ message: 'Request not found or already processed' });
     }
 
     if (status === 'Approved') {
-      // Add hours to the volunteer's total
-      const getRequestQuery = `SELECT volunteer_email, hours FROM HoursRequests WHERE id = ?;`;
-      connection.query(getRequestQuery, [id], (err, rows) => {
+      // Add hours to the volunteer's total for the specific request
+      const getRequestQuery = `
+        SELECT volunteer_email, hours
+        FROM HoursRequests
+        WHERE id = ?;
+      `;
+
+      connection.query(getRequestQuery, [request_id], (err, rows) => {
         if (err) {
           console.error('Error fetching request for hours update:', err.message);
           return res.status(500).json({ message: 'Database query error' });
@@ -763,14 +905,20 @@ app.put('/api/requests/:id', (req, res) => {
               console.error('Error updating volunteer hours:', err.message);
               return res.status(500).json({ message: 'Database update error' });
             }
+
+            res.json({ message: `Request ${status.toLowerCase()} successfully.` });
           });
+        } else {
+          res.json({ message: `Request ${status.toLowerCase()} successfully.` });
         }
       });
+    } else {
+      res.json({ message: `Request ${status.toLowerCase()} successfully.` });
     }
-
-    res.json({ message: `Request ${status.toLowerCase()} successfully` });
   });
 });
+
+
 
 //post hour request to the HoursRequest table
 app.post('/api/hours-requests', (req, res) => {

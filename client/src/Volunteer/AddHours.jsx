@@ -8,16 +8,16 @@ const AddHours = () => {
     from: '',
     to: '',
     activity: '',
-    class_name: '', // New field for class selection
+    class_name: '', // Field for class selection
   });
 
-  const [email, setEmail] = useState(null); // State for user email
-  const [supervisorEmail, setSupervisorEmail] = useState(null); // State for supervisor email
+  const [email, setEmail] = useState(null); // User email
+  const [supervisorEmail, setSupervisorEmail] = useState(null); // Supervisor email
   const [classes, setClasses] = useState([]); // List of classes
-  const [loading, setLoading] = useState(true); // State for loading status
+  const [loading, setLoading] = useState(true); // Loading state
   const navigate = useNavigate();
 
-  // Fetch the signed-in user's email, supervisor email, and classes
+  // Fetch the signed-in user's email and classes
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
@@ -34,16 +34,6 @@ const AddHours = () => {
 
         setEmail(userData.user.email);
 
-        // Fetch supervisor email for the volunteer
-        const supervisorResponse = await fetch(
-          `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisor/${userData.user.email}`
-        );
-        if (!supervisorResponse.ok) {
-          throw new Error('Failed to fetch supervisor email');
-        }
-        const supervisorData = await supervisorResponse.json();
-        setSupervisorEmail(supervisorData.supervisor_email);
-
         // Fetch classes for the volunteer
         const classesResponse = await fetch(
           `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/volunteer-classes/${userData.user.email}`
@@ -51,6 +41,7 @@ const AddHours = () => {
         if (!classesResponse.ok) {
           throw new Error('Failed to fetch classes');
         }
+
         const classesData = await classesResponse.json();
         setClasses(classesData); // Populate the dropdown with classes
       } catch (error) {
@@ -62,6 +53,29 @@ const AddHours = () => {
 
     fetchUserDetails();
   }, []);
+
+  // Fetch supervisor email whenever the class changes
+  useEffect(() => {
+    if (!formData.class_name || !email) return;
+
+    const fetchSupervisorEmail = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisor-email/${email}/${formData.class_name}`
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch supervisor email');
+        }
+        const data = await response.json();
+        setSupervisorEmail(data.supervisor_email);
+      } catch (error) {
+        console.error('Error fetching supervisor email:', error);
+        setSupervisorEmail(null); // Clear the email if there is an error
+      }
+    };
+
+    fetchSupervisorEmail();
+  }, [formData.class_name, email]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -134,7 +148,7 @@ const AddHours = () => {
     <div className="add-hours-container">
       <h2>Submit Hours Request</h2>
       <form onSubmit={handleSubmit} className="add-hours-form">
-      <div>
+        <div>
           <label>Class</label>
           <select
             name="class_name"

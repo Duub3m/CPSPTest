@@ -33,74 +33,47 @@ const Messaging = () => {
     fetchLoggedInUser();
   }, []);
 
-// Fetch list of users to message (volunteers for supervisors, supervisors for volunteers, admins for all roles)
-useEffect(() => {
-  if (!user) return;
+  // Fetch list of users to message
+  useEffect(() => {
+    if (!user) return;
 
-  const fetchUsers = async () => {
-    try {
-      let data = [];
+    const fetchUsers = async () => {
+      try {
+        let data = [];
 
-      if (user.role === 'Supervisor') {
-        const fetchVolunteers = fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisor/volunteers/${user.email}`);
-        const fetchAdmins = fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/admins`);
+        if (user.role === 'Supervisor') {
+          const [volunteers, admins] = await Promise.all([
+            fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisor/volunteers/${user.email}`).then((res) =>
+              res.json()
+            ),
+            fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/admins`).then((res) => res.json()),
+          ]);
+          data = [...volunteers, ...admins];
+        } else if (user.role === 'Volunteer') {
+          const [supervisors, admins] = await Promise.all([
+            fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisors/by-volunteer/${user.email}`).then((res) =>
+              res.json()
+            ),
+            fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/admins`).then((res) => res.json()),
+          ]);
+          data = [...supervisors, ...admins];
+        } else if (user.role === 'Admin') {
+          const [volunteers, supervisors, admins] = await Promise.all([
+            fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/volunteers`).then((res) => res.json()),
+            fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisors`).then((res) => res.json()),
+            fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/admins`).then((res) => res.json()),
+          ]);
+          data = [...volunteers, ...supervisors, ...admins];
+        }
 
-        const [volunteerResponse, adminResponse] = await Promise.all([fetchVolunteers, fetchAdmins]);
-
-        if (!volunteerResponse.ok || !adminResponse.ok) throw new Error('Failed to fetch users');
-
-        const volunteers = await volunteerResponse.json();
-        const admins = await adminResponse.json();
-
-        data = [...volunteers, ...admins];
-      } else if (user.role === 'Volunteer') {
-        const fetchSupervisors = fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisors/by-volunteer/${user.email}`);
-        const fetchAdmins = fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/admins`);
-
-        const [supervisorResponse, adminResponse] = await Promise.all([fetchSupervisors, fetchAdmins]);
-
-        if (!supervisorResponse.ok || !adminResponse.ok) throw new Error('Failed to fetch users');
-
-        const supervisors = await supervisorResponse.json();
-        const admins = await adminResponse.json();
-
-        data = [...supervisors, ...admins];
-      } else if (user.role === 'Admin') {
-        const fetchVolunteers = fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/volunteers`);
-        const fetchSupervisors = fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisors`);
-        const fetchAdmins = fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/admins`);
-
-        const [volunteerResponse, supervisorResponse, adminResponse] = await Promise.all([
-          fetchVolunteers,
-          fetchSupervisors,
-          fetchAdmins,
-        ]);
-
-        if (!volunteerResponse.ok || !supervisorResponse.ok || !adminResponse.ok) throw new Error('Failed to fetch users');
-
-        const volunteers = await volunteerResponse.json();
-        const supervisors = await supervisorResponse.json();
-        const admins = await adminResponse.json();
-
-        data = [...volunteers, ...supervisors, ...admins];
+        setUsers(data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
       }
+    };
 
-      // Exclude the logged-in admin from the list of users
-      if (user.role === 'Admin') {
-        data = data.filter((u) => u.email !== user.email);
-      }
-
-      setUsers(data);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
-  };
-
-  fetchUsers();
-}, [user]);
-
-
-
+    fetchUsers();
+  }, [user]);
 
   // Fetch messages between the sender and receiver
   useEffect(() => {
@@ -109,9 +82,6 @@ useEffect(() => {
     const fetchMessages = async () => {
       try {
         const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/messages/${user.email}/${receiverEmail}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch messages');
-        }
         const data = await response.json();
         setMessages(data);
       } catch (error) {
@@ -122,29 +92,57 @@ useEffect(() => {
     fetchMessages();
   }, [receiverEmail, user]);
 
-  // Handle sending a new message
+  // Handle sending a new message and notification
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user) return;
+    if (!newMessage.trim() || !user || !receiverEmail) {
+      console.error('Invalid message or user/receiver data');
+      return;
+    }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/messages`, {
+      // Send message
+      const messageResponse = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sender_email: user.email, receiver_email: receiverEmail, message: newMessage }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to send message');
+      if (!messageResponse.ok) {
+        const errorData = await messageResponse.json();
+        throw new Error(errorData.message || 'Failed to send message');
       }
 
-      const savedMessage = await response.json();
+      const savedMessage = await messageResponse.json();
       setMessages((prevMessages) => [
         ...prevMessages,
-        { id: savedMessage.id, sender_email: user.email, receiver_email: receiverEmail, message: newMessage, created_at: new Date().toISOString() },
+        {
+          id: savedMessage.id,
+          sender_email: user.email,
+          receiver_email: receiverEmail,
+          message: newMessage,
+          created_at: new Date().toISOString(),
+        },
       ]);
       setNewMessage('');
+
+      // Send notification
+      const notificationResponse = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/notifications`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receiver_email: receiverEmail,
+          sender_email: user.email,
+          notification_type: 'Message',
+          message: `You have received a new message from ${user.first_name} ${user.last_name}`,
+        }),
+      });
+
+      if (!notificationResponse.ok) {
+        const errorData = await notificationResponse.json();
+        console.error('Failed to send notification:', errorData.message);
+      }
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error sending message or notification:', error.message);
     }
   };
 
@@ -154,44 +152,37 @@ useEffect(() => {
 
   return (
     <div className="messaging-container">
-5      <h2>Messaging</h2>
+      <h2>Messaging</h2>
       {!receiverEmail ? (
         <div className="user-selection">
           <h3>
-        Select a {user?.role === 'Volunteer' ? 'Supervisor' : user?.role === 'Supervisor' ? 'Volunteer' : 'User'} to Message
-        </h3>
-
+            Select a {user?.role === 'Volunteer' ? 'Supervisor' : user?.role === 'Supervisor' ? 'Volunteer' : 'User'} to Message
+          </h3>
           <ul>
-  {console.log('Rendering users:', users)} {/* Debugging log */}
-  {users.map((user, index) => (
-    <li key={user.email || user.supervisor_email || index}>
-      <button
-        onClick={() => setReceiverEmail(user.email || user.supervisor_email)}
-      >
-        {user.first_name || user.supervisor_first_name || 'No Name'}{' '}
-        {user.last_name || user.supervisor_last_name || ''} (
-        {user.email || user.supervisor_email || 'No Email'})
-      </button>
-    </li>
-  ))}
-</ul>
-    </div>
+            {users.map((user, index) => (
+              <li key={user.email || user.supervisor_email || index}>
+                <button onClick={() => setReceiverEmail(user.email || user.supervisor_email)}>
+                  {user.first_name || user.supervisor_first_name || 'No Name'} {user.last_name || user.supervisor_last_name || ''} (
+                  {user.email || user.supervisor_email || 'No Email'})
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : (
         <>
           <div className="messages-list">
             {messages.map((msg) => (
-                <div
+              <div
                 key={msg.id}
-                className={`message-item ${
-                    msg.sender_email === user.email ? 'sent' : 'received'
-                }`}
+                className={`message-item ${msg.sender_email === user.email ? 'sent' : 'received'}`}
                 style={{
-                    alignSelf: msg.sender_email === user.email ? 'flex-end' : 'flex-start',
+                  alignSelf: msg.sender_email === user.email ? 'flex-end' : 'flex-start',
                 }}
-                >
+              >
                 <p>{msg.message}</p>
                 <small>{new Date(msg.created_at).toLocaleString()}</small>
-                </div>
+              </div>
             ))}
           </div>
           <div className="message-input">
