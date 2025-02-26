@@ -1,0 +1,205 @@
+/* Top Navbar */
+.top-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 60px;
+  background-color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  color: white;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Left Section: Hamburger Menu + Logo */
+.top-navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu-button {
+  font-size: 24px;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.top-logo {
+  width: 45px;
+  height: auto;
+}
+
+/* Right Section: Notifications + Profile Image */
+.top-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: auto;
+  padding-right: 10px;
+}
+
+/* Notification Wrapper */
+.notification-wrapper {
+  position: relative;
+  display: inline-block;
+  z-index: 200;
+}
+
+/* Notification Icon */
+.notification-icon {
+  position: relative;
+  font-size: 20px;
+  color: white;
+  cursor: pointer;
+}
+
+/* Notification Badge (Unread Count) */
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+/* Overlay Background when Dropdown is Active */
+.notification-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 150;
+}
+
+/* Notification Dropdown */
+.notification-dropdown {
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  width: 350px;
+  background-color: white;
+  color: black;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  z-index: 200;
+  padding: 15px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* Dropdown Header */
+.notification-dropdown h4 {
+  margin: 0 0 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+  font-size: 18px;
+  color: #333;
+}
+
+/* Notification Item */
+.notification-item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.3s;
+  cursor: pointer;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item:hover {
+  background-color: #f0f0f0;
+}
+
+.notification-item p {
+  margin: 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.notification-item small {
+  display: block;
+  font-size: 12px;
+  color: gray;
+  margin-top: 4px;
+}
+
+/* Button Style for "Mark as Read" */
+.notification-item button {
+  margin-top: 5px;
+  padding: 4px 8px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.notification-item button:hover {
+  background-color: #0056b3;
+}
+
+/* Profile Icon */
+.profile-icon img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid white;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.profile-icon img:hover {
+  transform: scale(1.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .top-navbar {
+    padding: 0 10px;
+  }
+
+  .top-logo {
+    height: 35px;
+  }
+
+  .profile-icon img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .menu-button {
+    font-size: 20px;
+  }
+
+  /* Notification Dropdown for Smaller Screens */
+  .notification-dropdown {
+    width: 90%;
+    right: 5%;
+  }
+}
+
+/* Ensure Full Width */
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+}

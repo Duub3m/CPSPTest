@@ -4,7 +4,7 @@ import "../Requests.css";
 const Requests = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [adminEmail, setAdminEmail] = useState(""); // Admin email state
+  const [adminEmail, setAdminEmail] = useState("");
 
   // Fetch the logged-in admin's email
   useEffect(() => {
@@ -21,7 +21,7 @@ const Requests = () => {
           console.error("Admin not logged in");
         }
       } catch (error) {
-        console.error("Error fetching admin email:", error);
+        console.error("Error fetching admin email:", error.message);
       }
     };
 
@@ -41,7 +41,7 @@ const Requests = () => {
         const data = await response.json();
         setRequests(data);
       } catch (error) {
-        console.error("Error fetching registration requests:", error);
+        console.error("Error fetching registration requests:", error.message);
       } finally {
         setLoading(false);
       }
@@ -50,25 +50,57 @@ const Requests = () => {
     fetchRequests();
   }, []);
 
-  const handleAction = async (id, status) => {
+  // Function to send notifications
+  const sendNotification = async (receiverEmail, notificationType, message) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/notifications`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          receiver_email: receiverEmail,
+          sender_email: adminEmail,
+          notification_type: notificationType,
+          message: message,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send notification.");
+      }
+    } catch (error) {
+      console.error("Error sending notification:", error.message);
+    }
+  };
+
+  // Handle Approve/Reject Actions
+  const handleAction = async (id, status, volunteerEmail, firstName, lastName, courseName) => {
     try {
       const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/registration-requests/${id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status, admin_email: adminEmail }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update request status.");
+        const errorMessage = await response.text();
+        throw new Error(`Failed to update request status: ${errorMessage}`);
       }
 
+      // Send notification based on action
+      if (status === "Approved") {
+        sendNotification(volunteerEmail, "Approval", 
+          `Your registration request for ${courseName} has been approved.`);
+      } else if (status === "Rejected") {
+        sendNotification(volunteerEmail, "Rejection", 
+          `Unfortunately, your registration request for ${courseName} has been rejected.`);
+      }
+
+      // Update UI
       setRequests((prevRequests) => prevRequests.filter((request) => request.id !== id));
       alert(`Request ${status.toLowerCase()} successfully.`);
     } catch (error) {
-      console.error(`Error updating request status:`, error);
-      alert("An error occurred. Please try again.");
+      console.error(`Error updating request status:`, error.message);
+      alert("An error occurred while processing the request. Please try again.");
     }
   };
 
@@ -106,18 +138,38 @@ const Requests = () => {
                 <td>{request.semester}</td>
                 <td>{request.year}</td>
                 <td>{request.organization}</td>
-                <td className={`status ${request.status.toLowerCase()}`}>{request.status}</td>
+                <td className={`status ${request.status.replace(/\s+/g, "-").toLowerCase()}`}>
+                  {request.status}
+                </td>
                 <td>
                   {request.status === "Pending Admin Approval" && (
                     <>
                       <button
-                        onClick={() => handleAction(request.id, "Approved")}
+                        onClick={() =>
+                          handleAction(
+                            request.id,
+                            "Approved",
+                            request.volunteer_email,
+                            request.first_name,
+                            request.last_name,
+                            request.course_name
+                          )
+                        }
                         className="approve-btn"
                       >
                         Approve
                       </button>
                       <button
-                        onClick={() => handleAction(request.id, "Rejected")}
+                        onClick={() =>
+                          handleAction(
+                            request.id,
+                            "Rejected",
+                            request.volunteer_email,
+                            request.first_name,
+                            request.last_name,
+                            request.course_name
+                          )
+                        }
                         className="reject-btn"
                       >
                         Reject

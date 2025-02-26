@@ -100,33 +100,24 @@ app.get('/auth/token', async (req, res) => {
     const { data: { id_token } } = await axios.post(`${config.tokenUrl}?${tokenParam}`);
     if (!id_token) throw new Error('ID Token not returned from Google OAuth');
 
-    const { email, name, picture } = jwt.decode(id_token);
+    // Decode the ID token
+    const { email, name, picture } = jwt.decode(id_token); // Include picture
     const [firstName, lastName] = name.split(' ');
 
-    // Check if user exists in either Volunteers or Supervisors table
-const [volunteerRows] = await db.query('SELECT * FROM Volunteers WHERE email = ?', [email]);
-const [supervisorRows] = await db.query('SELECT * FROM Supervisors WHERE email = ?', [email]);
-const [adminRows] = await db.query('SELECT * FROM Admins WHERE email = ?', [email]);
+    // Query the unified Users table
+    const [userRows] = await db.query('SELECT * FROM Users WHERE email = ?', [email]);
 
+    if (userRows.length === 0) {
+      throw new Error('User not found. Please register first.');
+    }
 
-if (volunteerRows.length === 0 && supervisorRows.length === 0 && adminRows.length ===0) {
-  // If user is not found in both tables, return an error or handle appropriately
-  throw new Error('User not found. Please register first.');
-}
+    const user = userRows[0];
+    user.picture = picture; // Add picture to the user object
 
-// Retrieve full user data from the appropriate table
-const user = volunteerRows[0] || supervisorRows[0] || adminRows[0];
-const userRole = volunteerRows.length > 0 
-  ? 'Volunteer' 
-  : supervisorRows.length > 0 
-    ? 'Supervisor' 
-    : 'Admin';
-
-
-    // Generate JWT token
+    // Generate a JWT token
     const token = jwt.sign({ user }, config.tokenSecret, { expiresIn: config.tokenExpiration });
 
-    // Send token as a cookie
+    // Set the token as an HTTP-only cookie
     res.cookie('token', token, {
       maxAge: config.tokenExpiration * 1000,
       httpOnly: true,
@@ -138,6 +129,8 @@ const userRole = volunteerRows.length > 0
     res.status(500).json({ message: 'Server error during authentication' });
   }
 });
+
+
 
 // Check if User is Logged In
 app.get('/auth/logged_in', (req, res) => {
@@ -155,12 +148,13 @@ app.get('/auth/logged_in', (req, res) => {
       httpOnly: true,
     });
 
-    res.json({ loggedIn: true, user });
+    res.json({ loggedIn: true, user }); // Ensure `user.picture` is included here
   } catch (err) {
     console.error('Error checking login state:', err.message);
     res.json({ loggedIn: false });
   }
 });
+
 
 // Logout Endpoint
 app.post('/auth/logout', (req, res) => {

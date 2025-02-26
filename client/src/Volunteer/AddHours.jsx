@@ -8,20 +8,19 @@ const AddHours = () => {
     from: '',
     to: '',
     activity: '',
-    class_name: '', // Field for class selection
+    class_name: '',
   });
 
-  const [email, setEmail] = useState(null); // User email
-  const [supervisorEmail, setSupervisorEmail] = useState(null); // Supervisor email
-  const [classes, setClasses] = useState([]); // List of classes
-  const [loading, setLoading] = useState(true); // Loading state
+  const [email, setEmail] = useState(null);
+  const [supervisorEmail, setSupervisorEmail] = useState(null);
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Fetch the signed-in user's email and classes
+  // Fetch user details and classes
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        // Fetch logged-in user's email
         const userResponse = await fetch(`${process.env.REACT_APP_SERVER_URL}/auth/logged_in`, {
           credentials: 'include',
         });
@@ -34,7 +33,7 @@ const AddHours = () => {
 
         setEmail(userData.user.email);
 
-        // Fetch classes for the volunteer
+        // Fetch user's enrolled classes
         const classesResponse = await fetch(
           `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/volunteer-classes/${userData.user.email}`
         );
@@ -43,7 +42,14 @@ const AddHours = () => {
         }
 
         const classesData = await classesResponse.json();
-        setClasses(classesData); // Populate the dropdown with classes
+        setClasses(classesData);
+
+        if (classesData.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            class_name: classesData[0].class_name,
+          }));
+        }
       } catch (error) {
         console.error('Error fetching user details or classes:', error);
       } finally {
@@ -54,7 +60,7 @@ const AddHours = () => {
     fetchUserDetails();
   }, []);
 
-  // Fetch supervisor email whenever the class changes
+  // Fetch supervisor email when class changes
   useEffect(() => {
     if (!formData.class_name || !email) return;
 
@@ -63,14 +69,12 @@ const AddHours = () => {
         const response = await fetch(
           `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisor-email/${email}/${formData.class_name}`
         );
-        if (!response.ok) {
-          throw new Error('Failed to fetch supervisor email');
-        }
+        if (!response.ok) throw new Error('Failed to fetch supervisor email');
         const data = await response.json();
         setSupervisorEmail(data.supervisor_email);
       } catch (error) {
         console.error('Error fetching supervisor email:', error);
-        setSupervisorEmail(null); // Clear the email if there is an error
+        setSupervisorEmail(null);
       }
     };
 
@@ -91,8 +95,8 @@ const AddHours = () => {
   const calculateHours = () => {
     const fromTime = new Date(`01/01/2023 ${formData.from}`);
     const toTime = new Date(`01/01/2023 ${formData.to}`);
-    const diff = (toTime - fromTime) / (1000 * 60 * 60); // Convert ms to hours
-    return diff > 0 ? diff : 0; // Prevent negative values
+    const diff = (toTime - fromTime) / (1000 * 60 * 60);
+    return diff > 0 ? diff : 0;
   };
 
   const handleSubmit = async (e) => {
@@ -101,15 +105,11 @@ const AddHours = () => {
 
     if (hours > 0 && email && supervisorEmail && formData.class_name) {
       try {
-        // Convert date to YYYY-MM-DD format
         const formattedDate = formatDateToISO(formData.date);
 
-        // Make a POST request to submit the request for hours
         const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/hours-requests`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             volunteer_email: email,
             supervisor_email: supervisorEmail,
@@ -123,14 +123,12 @@ const AddHours = () => {
           }),
         });
 
-        if (!response.ok) {
-          throw new Error('Failed to submit hours request');
-        }
+        if (!response.ok) throw new Error('Failed to submit hours request');
 
         const result = await response.json();
-        alert(result.message); // Display success message
-        setFormData({ date: '', from: '', to: '', activity: '', class_name: '' }); // Reset form
-        navigate('/profile'); // Redirect back to the profile page
+        alert(result.message);
+        setFormData({ date: '', from: '', to: '', activity: '', class_name: '' });
+        navigate('/profile');
       } catch (error) {
         console.error('Error submitting hours request:', error);
         alert('An error occurred while submitting the request. Please try again.');
@@ -142,6 +140,11 @@ const AddHours = () => {
 
   if (loading) {
     return <p>Loading user, supervisor, and class information...</p>;
+  }
+
+  // **Handle when user is not enrolled in any class**
+  if (classes.length === 0) {
+    return <p>You are not enrolled in a course. Please register for a class to add hours.</p>;
   }
 
   return (
@@ -164,6 +167,7 @@ const AddHours = () => {
             ))}
           </select>
         </div>
+
         <div>
           <label>Date</label>
           <input
@@ -175,6 +179,7 @@ const AddHours = () => {
             required
           />
         </div>
+
         <div>
           <label>From</label>
           <input
@@ -185,6 +190,7 @@ const AddHours = () => {
             required
           />
         </div>
+
         <div>
           <label>To</label>
           <input
@@ -195,6 +201,7 @@ const AddHours = () => {
             required
           />
         </div>
+
         <div>
           <label>Activity</label>
           <textarea
@@ -205,6 +212,7 @@ const AddHours = () => {
             required
           />
         </div>
+
         <button type="submit">Submit Request</button>
       </form>
     </div>

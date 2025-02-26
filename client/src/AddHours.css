@@ -1,39 +1,162 @@
+/* Main container for the Add Hours form */
 .add-hours-container {
-    margin: 20px auto;
-    padding: 20px;
-    max-width: 500px;
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+  margin: 40px auto;
+  padding: 20px;
+  max-width: 1000px;
+  font-family: Arial, sans-serif;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Header style */
+.add-hours-container h2 {
+  margin-bottom: 30px;
+  text-align: center;
+  color: #401967;
+  font-size: 36px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* Form layout */
+.add-hours-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 0;
+  width: 100%;
+  animation: slideUp 0.5s ease-in-out;
+}
+
+/* Full-width for text area and buttons */
+.add-hours-form textarea,
+.add-hours-form button {
+  grid-column: span 2;
+}
+
+/* Label style */
+.add-hours-form label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #555;
+  display: block;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
+
+/* Input and select style */
+.add-hours-form input,
+.add-hours-form select,
+.add-hours-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+  background-color: #f9f9f9;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.add-hours-form input:focus,
+.add-hours-form select:focus,
+.add-hours-form textarea:focus {
+  outline: none;
+  border-color: #401967;
+  background-color: #fff;
+  box-shadow: 0 0 5px rgba(64, 25, 103, 0.5);
+}
+
+/* Button style */
+.add-hours-form button {
+  background-color: #401967;
+  color: white;
+  font-size: 18px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.add-hours-form button:hover {
+  background-color: #E5B340;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(229, 179, 64, 0.4);
+}
+
+.add-hours-form button:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+  .add-hours-form {
+    grid-template-columns: 1fr;
   }
-  
-  .add-hours-container h2 {
-    margin-bottom: 20px;
-    text-align: center;
-  }
-  
-  .add-hours-form label {
-    display: block;
-    margin-bottom: 5px;
-  }
-  
-  .add-hours-form input,
+
   .add-hours-form textarea,
   .add-hours-form button {
-    width: 100%;
-    margin-bottom: 15px;
+    grid-column: span 1;
+  }
+
+  .add-hours-container {
     padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    box-shadow: none;
   }
-  
+
+  .add-hours-form input,
+  .add-hours-form select,
+  .add-hours-form textarea {
+    font-size: 14px;
+    padding: 10px;
+  }
+
   .add-hours-form button {
-    background-color: #4CAF50;
-    color: white;
     font-size: 16px;
-    cursor: pointer;
+    padding: 10px;
   }
-  
-  .add-hours-form button:hover {
-    background-color: #45a049;
-  }
+}
+
+/* Form field spacing */
+.add-hours-form div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Success and error messages */
+.success-message {
+  padding: 10px;
+  background-color: #d4edda;
+  color: #155724;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 10px;
+  box-shadow: 0 0 5px rgba(0, 128, 0, 0.3);
+}
+
+.error-message {
+  padding: 10px;
+  background-color: #f8d7da;
+  color: #721c24;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 10px;
+  box-shadow: 0 0 5px rgba(255, 0, 0, 0.3);
+}
+
+/* Animated focus effect */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}

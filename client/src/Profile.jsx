@@ -1,8 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Profile.css';
-import Navbar from './Navbar'; // Import the Navbar component
-import UABG2 from './UABG2.jpeg';
+import TopNavbar from './TopNavbar';
 import { AuthContext } from './AuthContextProvider';
 
 const Profile = () => {
@@ -10,21 +9,25 @@ const Profile = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [totalHours, setTotalHours] = useState(0);
-  const [email, setEmail] = useState(null);
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState(null);
+  const [role, setRole] = useState('');
 
+  // Fetch logged-in user's email
   useEffect(() => {
     const fetchLoggedInUser = async () => {
       try {
         const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/auth/logged_in`, {
           credentials: 'include',
         });
+        if (!response.ok) throw new Error(`Failed to fetch user: ${response.status}`);
+
         const data = await response.json();
-        if (data.loggedIn) {
+        if (data.loggedIn && data.user?.email) {
           setEmail(data.user.email);
         } else {
-          console.error('User not logged in');
+          console.warn('User not logged in.');
+          navigate('/login');
         }
       } catch (error) {
         console.error('Error fetching logged-in user:', error);
@@ -32,22 +35,22 @@ const Profile = () => {
     };
 
     fetchLoggedInUser();
-  }, []);
+  }, [navigate]);
 
+  // Fetch user data
   useEffect(() => {
     if (!email) return;
 
     const fetchUserData = async () => {
       try {
         const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/user/email/${email}`);
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`Failed to fetch user data: ${response.status}`);
+
         const data = await response.json();
-        setUser(data.user);
-        setRole(data.role);
+        setUser(data);
+        setRole(data.role || 'Unknown');
         if (data.role === 'Volunteer') {
-          setTotalHours(data.user.total_hours || 0);
+          setTotalHours(data.total_hours ?? 0);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -72,49 +75,55 @@ const Profile = () => {
     }
   };
 
-  if (loading) {
-    return <p>Loading profile...</p>;
-  }
+  if (loading) return <p>Loading profile...</p>;
 
   return (
-    <div>
-      <Navbar role={role} handleLogout={handleLogout} />
+    <div className="profile-page">
+      <TopNavbar />
+
       <div className="main-content">
-        <div className="cover-photo">
-          <img src={user?.coverPhoto || UABG2} alt="Cover" />
-        </div>
         <div className="profile-description-card">
           <h2>Edit Profile</h2>
+
           <div className="form-section">
             <h3>USER INFORMATION</h3>
             <div className="form-group">
               <div>
-                <label>First name</label>
-                <input type="text" value={user?.first_name || ''} readOnly />
+                <label>First Name</label>
+                <input type="text" value={user?.first_name ?? ''} readOnly />
               </div>
               <div>
-                <label>Last name</label>
-                <input type="text" value={user?.last_name || ''} readOnly />
+                <label>Last Name</label>
+                <input type="text" value={user?.last_name ?? ''} readOnly />
               </div>
             </div>
           </div>
+
           <div className="form-section">
             <h3>CONTACT INFORMATION</h3>
             <div className="form-group">
               <div>
-                <label>Email address</label>
-                <input type="email" value={user?.email || ''} readOnly />
+                <label>Email Address</label>
+                <input type="email" value={user?.email ?? ''} readOnly />
               </div>
               <div>
-                <label>Phone number</label>
-                <input type="text" value={user?.phoneNumber || 'N/A'} readOnly />
+                <label>Phone Number</label>
+                <input type="text" value={user?.phone_number ?? 'N/A'} readOnly />
               </div>
             </div>
           </div>
+
           <div className="form-section about-me">
             <h3>ABOUT ME</h3>
-            <textarea readOnly>{user?.about || 'No description provided.'}</textarea>
+            <textarea readOnly value={user?.about ?? 'No description provided.'}></textarea>
           </div>
+
+          {role === 'Volunteer' && (
+            <div className="form-section">
+              <h3>TOTAL HOURS</h3>
+              <p>{totalHours}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

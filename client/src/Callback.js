@@ -17,7 +17,7 @@ const Callback = () => {
         try {
           await axios.get(`${serverUrl}/auth/token${window.location.search}`);
           checkLoginState();
-          navigate('/profile'); // Redirect to Profile page
+          navigate('/profile2'); // Redirect to Profile page
         } catch (err) {
           console.error(err);
           navigate('/login'); // Redirect to login on error

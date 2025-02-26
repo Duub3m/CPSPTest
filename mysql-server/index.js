@@ -44,16 +44,130 @@ connection.connect((err) => {
 
 // Routes
 
+// Get users based on the logged-in user's role and organization
+app.get('/api/users/:email', (req, res) => {
+  const userEmail = req.params.email;
+
+  // Get logged-in user details
+  const getUserQuery = `SELECT email, role, organization_id FROM Users WHERE email = ?`;
+
+  connection.query(getUserQuery, [userEmail], (err, userResults) => {
+    if (err) {
+      console.error('Error fetching user details:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    if (userResults.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const { role, organization_id } = userResults[0];
+
+    let sqlQuery;
+    let queryParams;
+
+    // Role-based query logic, excluding the logged-in user
+    if (role === 'Supervisor' || role === 'Volunteer') {
+      // Supervisors and Volunteers: Get Supervisors in the same organization and Admins
+      sqlQuery = `
+        SELECT email, first_name, last_name, role
+        FROM Users
+        WHERE ((role = 'Supervisor' AND organization_id = ?) OR role = 'Admin')
+        AND email != ?;
+      `;
+      queryParams = [organization_id, userEmail];
+    } else if (role === 'Admin') {
+      // Admins: Get all Supervisors and Volunteers, excluding themselves
+      sqlQuery = `
+        SELECT email, first_name, last_name, role
+        FROM Users
+        WHERE (role = 'Supervisor' OR role = 'Volunteer')
+        AND email != ?;
+      `;
+      queryParams = [userEmail];
+    } else {
+      return res.status(403).json({ message: 'Unauthorized role' });
+    }
+
+    // Execute query
+    connection.query(sqlQuery, queryParams, (err, results) => {
+      if (err) {
+        console.error('Error fetching users:', err.message);
+        return res.status(500).json({ message: 'Database query error' });
+      }
+
+      res.json(results);
+    });
+  });
+});
+
+
+app.get('/api/supervisors/by-organization/:organizationId', (req, res) => {
+  const { organizationId } = req.params;
+
+  const query = `
+    SELECT first_name, last_name, email 
+    FROM Users 
+    WHERE role = 'Supervisor' AND organization_id = ?`;
+
+  connection.query(query, [organizationId], (err, results) => {
+    if (err) {
+      console.error('Error fetching supervisors:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+    res.json(results);
+  });
+});
+
+
+// Get the last message between two users
+app.get('/api/messages/last/:email1/:email2', (req, res) => {
+  const { email1, email2 } = req.params;
+
+  const sqlQuery = `
+    SELECT *
+    FROM Messages
+    WHERE (sender_email = ? AND receiver_email = ?)
+       OR (sender_email = ? AND receiver_email = ?)
+    ORDER BY created_at DESC
+    LIMIT 1;
+  `;
+
+  connection.query(sqlQuery, [email1, email2, email2, email1], (err, results) => {
+    if (err) {
+      console.error('Error fetching last message:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    if (results.length > 0) {
+      res.json(results[0]); // Send the last message
+    } else {
+      res.json({ message: 'No messages found between these users.' });
+    }
+  });
+});
+
+
+
+
 // Get logged hours requests for a supervisor
 app.get('/api/hours-requests/supervisor/:supervisorEmail', (req, res) => {
   const { supervisorEmail } = req.params;
 
   const sqlQuery = `
-    SELECT hr.*, v.first_name, v.last_name, vc.class_name
+    SELECT 
+      hr.*, 
+      u.first_name AS volunteer_first_name, 
+      u.last_name AS volunteer_last_name, 
+      vc.class_name
     FROM HoursRequests hr
-    JOIN VolunteerClasses vc ON hr.class_name = vc.class_name AND hr.volunteer_email = vc.volunteer_email
-    JOIN Volunteers v ON hr.volunteer_email = v.email
-    WHERE hr.supervisor_email = ?
+    JOIN VolunteerClasses vc 
+      ON hr.class_name = vc.class_name 
+      AND hr.volunteer_email = vc.volunteer_email
+    JOIN Users u 
+      ON hr.volunteer_email = u.email
+    WHERE hr.supervisor_email = ? 
+      AND u.role = 'Volunteer'
     ORDER BY hr.created_at DESC;
   `;
 
@@ -66,6 +180,7 @@ app.get('/api/hours-requests/supervisor/:supervisorEmail', (req, res) => {
     res.json(results);
   });
 });
+
 
 
 // Get supervisor email for a volunteer's class and organization
@@ -457,6 +572,10 @@ app.put('/api/registration-requests/supervisor/:supervisorEmail', (req, res) => 
     return res.status(400).json({ message: 'Invalid status value' });
   }
 
+  console.log('Supervisor Email:', supervisorEmail);
+  console.log('Status:', status);
+  console.log('Volunteer Email:', volunteer_email);
+
   const updateRequestQuery = `
     UPDATE RegistrationRequests
     SET status = ?, updated_at = CURRENT_TIMESTAMP
@@ -512,6 +631,7 @@ app.put('/api/registration-requests/supervisor/:supervisorEmail', (req, res) => 
     }
   });
 });
+
 
 
 
@@ -673,10 +793,11 @@ app.get('/api/supervisor/volunteers/:supervisorEmail', (req, res) => {
   const { supervisorEmail } = req.params;
 
   const sqlQuery = `
-    SELECT v.first_name, v.last_name, v.email, v.total_hours
-    FROM SupervisorVolunteer sv
-    INNER JOIN Volunteers v ON sv.volunteer_email = v.email
-    WHERE sv.supervisor_email = ?;
+    SELECT u.first_name, u.last_name, u.email, u.total_hours
+    FROM HoursRequests hr
+    JOIN Users u ON hr.volunteer_email = u.email
+    WHERE hr.supervisor_email = ? AND u.role = 'Volunteer'
+    GROUP BY u.email;
   `;
 
   connection.query(sqlQuery, [supervisorEmail], (err, results) => {
@@ -685,13 +806,10 @@ app.get('/api/supervisor/volunteers/:supervisorEmail', (req, res) => {
       return res.status(500).json({ message: 'Database query error' });
     }
 
-    if (results.length === 0) {
-      return res.status(404).json({ message: 'No volunteers found for this supervisor' });
-    }
-
     res.json(results);
   });
 });
+
 
 // Get all classes for a specific volunteer
 app.get('/api/volunteer-classes/:email', (req, res) => {
@@ -785,8 +903,9 @@ app.get('/api/requests/count/:supervisorEmail', (req, res) => {
 
   const sqlQuery = `
     SELECT COUNT(*) AS pending_count
-    FROM HoursRequests
-    WHERE supervisor_email = ? AND status = 'Pending';
+    FROM HoursRequests hr
+    JOIN Users u ON hr.supervisor_email = u.email
+    WHERE hr.supervisor_email = ? AND hr.status = 'Pending';
   `;
 
   connection.query(sqlQuery, [supervisorEmail], (err, results) => {
@@ -799,6 +918,7 @@ app.get('/api/requests/count/:supervisorEmail', (req, res) => {
     res.json({ pending_count: count });
   });
 });
+
 
 //fetch requests for a volunteer
 app.get('/api/requests/volunteer/:email', (req, res) => {
@@ -820,8 +940,38 @@ app.get('/api/requests/volunteer/:email', (req, res) => {
   });
 });
 
-//Fetch Requests for a Supervisor
+// Fetch Registration Requests for a Supervisor
+app.get('/api/registration-requests/supervisor/:supervisorEmail', (req, res) => {
+  const { supervisorEmail } = req.params;
 
+  const sqlQuery = `
+    SELECT 
+      rr.id,
+      rr.volunteer_email,
+      rr.course_name,
+      rr.organization,
+      rr.semester,
+      rr.year,
+      rr.status,
+      u.first_name AS volunteer_first_name,
+      u.last_name AS volunteer_last_name
+    FROM RegistrationRequests rr
+    JOIN Users u ON rr.volunteer_email = u.email
+    WHERE rr.supervisor_email = ? AND rr.status = 'Pending Supervisor Approval';
+  `;
+
+  connection.query(sqlQuery, [supervisorEmail], (err, results) => {
+    if (err) {
+      console.error('Error fetching registration requests:', err.message);
+      return res.status(500).json({ message: 'Database query error' });
+    }
+
+    res.json(results);
+  });
+});
+
+
+// Fetch Requests for a Supervisor
 app.get('/api/requests/:supervisorEmail', (req, res) => {
   const { supervisorEmail } = req.params;
 
@@ -829,18 +979,21 @@ app.get('/api/requests/:supervisorEmail', (req, res) => {
     SELECT 
       hr.id, 
       hr.volunteer_email, 
-      v.first_name AS volunteer_first_name, 
-      v.last_name AS volunteer_last_name, 
       hr.class_name, 
       hr.date, 
       hr.from_time, 
       hr.to_time, 
       hr.activity, 
       hr.hours, 
-      hr.status
+      hr.status, 
+      hr.created_at,
+      u.first_name AS volunteer_first_name, 
+      u.last_name AS volunteer_last_name
     FROM HoursRequests hr
-    JOIN Volunteers v ON hr.volunteer_email = v.email
-    WHERE hr.supervisor_email = ? AND hr.status = 'Pending';
+    JOIN Users u ON hr.volunteer_email = u.email
+    WHERE hr.supervisor_email = ? 
+      AND hr.status = 'Pending' 
+      AND u.role = 'Volunteer';
   `;
 
   connection.query(sqlQuery, [supervisorEmail], (err, results) => {
@@ -853,9 +1006,10 @@ app.get('/api/requests/:supervisorEmail', (req, res) => {
   });
 });
 
+
 app.put('/api/requests/supervisor/:email', (req, res) => {
   const { email } = req.params; // Supervisor's email
-  const { status, request_id } = req.body; // Unique ID for the request
+  const { status, request_id } = req.body; // Request ID and new status
 
   if (!['Approved', 'Rejected'].includes(status)) {
     return res.status(400).json({ message: 'Invalid status value' });
@@ -878,7 +1032,7 @@ app.put('/api/requests/supervisor/:email', (req, res) => {
     }
 
     if (status === 'Approved') {
-      // Add hours to the volunteer's total for the specific request
+      // Fetch the approved hours and update the volunteer's total hours
       const getRequestQuery = `
         SELECT volunteer_email, hours
         FROM HoursRequests
@@ -894,13 +1048,13 @@ app.put('/api/requests/supervisor/:email', (req, res) => {
         if (rows.length > 0) {
           const { volunteer_email, hours } = rows[0];
 
-          const updateVolunteerQuery = `
-            UPDATE Volunteers
+          const updateUserQuery = `
+            UPDATE Users
             SET total_hours = total_hours + ?
-            WHERE email = ?;
+            WHERE email = ? AND role = 'Volunteer';
           `;
 
-          connection.query(updateVolunteerQuery, [hours, volunteer_email], (err) => {
+          connection.query(updateUserQuery, [hours, volunteer_email], (err) => {
             if (err) {
               console.error('Error updating volunteer hours:', err.message);
               return res.status(500).json({ message: 'Database update error' });
@@ -917,7 +1071,6 @@ app.put('/api/requests/supervisor/:email', (req, res) => {
     }
   });
 });
-
 
 
 //post hour request to the HoursRequest table
@@ -942,6 +1095,7 @@ app.post('/api/hours-requests', (req, res) => {
     }
   );
 });
+
 
 app.get('/api/supervisor/:email', (req, res) => {
   const { email } = req.params;
@@ -996,100 +1150,45 @@ app.get('/api/supervisors/by-volunteer/:volunteerEmail', (req, res) => {
 
 
 
-// Get user details by email (checks Supervisors, Volunteers, and Admins tables)
+// Get user details by email 
 app.get('/api/user/email/:email', (req, res) => {
   const { email } = req.params;
 
-  // Check Admins table first
-  const adminQuery = `
-    SELECT first_name, last_name, email, 'Admin' as role 
-    FROM Admins WHERE email = ?;
+  const sqlQuery = `
+    SELECT id, email, first_name, last_name, role, total_hours
+    FROM Users
+    WHERE email = ?;
   `;
 
-  connection.query(adminQuery, [email], (err, adminResults) => {
+  connection.query(sqlQuery, [email], (err, results) => {
     if (err) {
-      console.error('Error fetching admin data:', err.message);
+      console.error('Error fetching user:', err.message);
       return res.status(500).json({ message: 'Database query error' });
     }
 
-    if (adminResults.length > 0) {
-      return res.json({ user: adminResults[0], role: 'Admin' });
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    // If not in Admins, check Supervisors table
-    const supervisorQuery = `
-      SELECT first_name, last_name, email, 'Supervisor' as role 
-      FROM Supervisors WHERE email = ?;
-    `;
-
-    connection.query(supervisorQuery, [email], (err, supervisorResults) => {
-      if (err) {
-        console.error('Error fetching supervisor data:', err.message);
-        return res.status(500).json({ message: 'Database query error' });
-      }
-
-      if (supervisorResults.length > 0) {
-        return res.json({ user: supervisorResults[0], role: 'Supervisor' });
-      }
-
-      // If not in Supervisors, check Volunteers table
-      const volunteerQuery = `
-        SELECT first_name, last_name, email, total_hours, 'Volunteer' as role 
-        FROM Volunteers WHERE email = ?;
-      `;
-
-      connection.query(volunteerQuery, [email], (err, volunteerResults) => {
-        if (err) {
-          console.error('Error fetching volunteer data:', err.message);
-          return res.status(500).json({ message: 'Database query error' });
-        }
-
-        if (volunteerResults.length > 0) {
-          return res.json({ user: volunteerResults[0], role: 'Volunteer' });
-        }
-
-        // If not found in any table
-        return res.status(404).json({ message: 'User not found' });
-      });
-    });
+    res.json(results[0]);
   });
 });
 
-//Get all Admins 
-app.get('/api/admins', (req, res) =>{
-  const sqlQuery = 'SELECT * From Admins';
+
+// Get all Admins 
+app.get('/api/admins', (req, res) => {
+  const sqlQuery = 'SELECT * FROM Users WHERE role = "Admin"';
+  
   connection.query(sqlQuery, (err, results) => {
     if (err) {
       console.error("Error fetching admins:", err.message);
-      return res.status(500).json({ message: 'Database query error'});
-    }
-    res.json(results);
-  });
-});
-
-// Get all volunteers (for testing/debugging)
-app.get('/api/volunteers', (req, res) => {
-  const sqlQuery = 'SELECT * FROM Volunteers';
-  connection.query(sqlQuery, (err, results) => {
-    if (err) {
-      console.error('Error fetching volunteers:', err.message);
       return res.status(500).json({ message: 'Database query error' });
     }
     res.json(results);
   });
 });
 
-// Get all supervisors (for testing/debugging)
-app.get('/api/supervisors', (req, res) => {
-  const sqlQuery = 'SELECT * FROM Supervisors';
-  connection.query(sqlQuery, (err, results) => {
-    if (err) {
-      console.error('Error fetching supervisors:', err.message);
-      return res.status(500).json({ message: 'Database query error' });
-    }
-    res.json(results);
-  });
-});
+
 
 // Update total hours for a volunteer by email
 app.put('/api/volunteering-hours/email/:email', (req, res) => {
@@ -1097,9 +1196,9 @@ app.put('/api/volunteering-hours/email/:email', (req, res) => {
   const { total_hours } = req.body;
 
   const sqlQuery = `
-    UPDATE Volunteers
+    UPDATE Users
     SET total_hours = ?
-    WHERE email = ?;
+    WHERE email = ? AND role = 'Volunteer';
   `;
 
   connection.query(sqlQuery, [total_hours, email], (err, results) => {
@@ -1116,60 +1215,6 @@ app.put('/api/volunteering-hours/email/:email', (req, res) => {
   });
 });
 
-// Add a new volunteer (for testing/debugging)
-app.post('/api/volunteers', (req, res) => {
-  const { first_name, last_name, email } = req.body;
-
-  const sqlQuery = `
-    INSERT INTO Volunteers (first_name, last_name, email, total_hours)
-    VALUES (?, ?, ?, 0);
-  `;
-
-  connection.query(sqlQuery, [first_name, last_name, email], (err, results) => {
-    if (err) {
-      console.error('Error inserting volunteer:', err.message);
-      return res.status(500).json({ message: 'Database insertion error' });
-    }
-
-    res.status(201).json({ message: 'Volunteer added successfully', id: results.insertId });
-  });
-});
-
-// Delete a user by email (checks both Supervisors and Volunteers)
-app.delete('/api/user/email/:email', (req, res) => {
-  const { email } = req.params;
-
-  // Try deleting from Supervisors first
-  const deleteSupervisorQuery = 'DELETE FROM Supervisors WHERE email = ?';
-
-  connection.query(deleteSupervisorQuery, [email], (err, supervisorResults) => {
-    if (err) {
-      console.error('Error deleting supervisor:', err.message);
-      return res.status(500).json({ message: 'Database deletion error' });
-    }
-
-    if (supervisorResults.affectedRows > 0) {
-      return res.json({ message: 'Supervisor deleted successfully' });
-    }
-
-    // If not in Supervisors, try deleting from Volunteers
-    const deleteVolunteerQuery = 'DELETE FROM Volunteers WHERE email = ?';
-
-    connection.query(deleteVolunteerQuery, [email], (err, volunteerResults) => {
-      if (err) {
-        console.error('Error deleting volunteer:', err.message);
-        return res.status(500).json({ message: 'Database deletion error' });
-      }
-
-      if (volunteerResults.affectedRows === 0) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-
-      res.json({ message: 'Volunteer deleted successfully' });
-    });
-  });
-});
-
 // Add hours to total_hours for a volunteer by email
 app.post('/api/volunteering-hours/email/:email', (req, res) => {
   const { email } = req.params;
@@ -1180,7 +1225,7 @@ app.post('/api/volunteering-hours/email/:email', (req, res) => {
   }
 
   const sqlQuery = `
-    UPDATE Volunteers
+    UPDATE Users
     SET total_hours = total_hours + ?
     WHERE email = ?;
   `;

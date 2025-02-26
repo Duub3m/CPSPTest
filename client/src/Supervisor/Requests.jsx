@@ -7,11 +7,10 @@ const Requests = () => {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState(null); // Supervisor email
 
-  // Fetch supervisor email and requests
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        // Fetch logged-in supervisor email
+        // Fetch logged-in user details
         const userResponse = await fetch(`${process.env.REACT_APP_SERVER_URL}/auth/logged_in`, {
           credentials: 'include',
         });
@@ -24,26 +23,21 @@ const Requests = () => {
 
         setEmail(userData.user.email);
 
-        // Fetch registration requests
-        const regRequestsResponse = await fetch(
+        // Fetch registration requests for the supervisor
+        const registrationRequestsResponse = await fetch(
           `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/registration-requests/supervisor/${userData.user.email}`
         );
-        if (!regRequestsResponse.ok) throw new Error('Failed to fetch registration requests');
-        const regRequestsData = await regRequestsResponse.json();
+        if (!registrationRequestsResponse.ok) throw new Error('Failed to fetch registration requests');
+        const registrationRequestsData = await registrationRequestsResponse.json();
+        setRegistrationRequests(registrationRequestsData);
 
-        // Fetch logged hours requests
+        // Fetch pending hours requests for the supervisor
         const hoursRequestsResponse = await fetch(
-          `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/hours-requests/supervisor/${userData.user.email}`
+          `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/requests/${userData.user.email}`
         );
         if (!hoursRequestsResponse.ok) throw new Error('Failed to fetch hours requests');
         const hoursRequestsData = await hoursRequestsResponse.json();
-
-        // Filter requests with the status 'Pending'
-        const pendingRegRequests = regRequestsData.filter((request) => request.status === 'Pending Supervisor Approval');
-        const pendingHoursRequests = hoursRequestsData.filter((request) => request.status === 'Pending');
-
-        setRegistrationRequests(pendingRegRequests);
-        setHoursRequests(pendingHoursRequests);
+        setHoursRequests(hoursRequestsData);
       } catch (error) {
         console.error('Error fetching requests:', error);
       } finally {
@@ -54,40 +48,89 @@ const Requests = () => {
     fetchRequests();
   }, []);
 
-  // Helper function to convert military time to 12-hour format with AM/PM
-  const formatTime = (time) => {
-    const [hours, minutes] = time.split(':');
-    const intHours = parseInt(hours, 10);
-    const period = intHours >= 12 ? 'PM' : 'AM';
-    const formattedHours = intHours % 12 || 12; // Convert 0 or 12 to 12
-    return `${formattedHours}:${minutes} ${period}`;
+  // Send notification function
+  const sendNotification = async (receiverEmail, senderEmail, type, message) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/notifications`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receiver_email: receiverEmail,
+          sender_email: senderEmail,
+          notification_type: type,
+          message,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to send notification to ${receiverEmail}`);
+      }
+    } catch (error) {
+      console.error('Error sending notification:', error);
+    }
   };
 
+  // Fetch all admin emails from the Users table
+const getAdminEmails = async () => {
+  try {
+    const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/admins`);
+    if (!response.ok) throw new Error('Failed to fetch admin emails');
+    const data = await response.json();
+    return data.map((admin) => admin.email); // Ensure it returns an array of emails
+  } catch (error) {
+    console.error('Error fetching admin emails:', error);
+    return [];
+  }
+};
+
+
   // Handle approval or rejection of registration requests
-  const handleRequestAction = async (requestId, status) => {
+  const handleRegistrationRequestAction = async (requestId, status, volunteerEmail, firstName, lastName, courseName) => {
     try {
+      const mappedStatus = status === 'Approved' ? 'Pending Admin Approval' : 'Rejected';
+
       const response = await fetch(
         `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/registration-requests/supervisor/${email}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status, request_id: requestId }),
+          body: JSON.stringify({ status: mappedStatus, volunteer_email: volunteerEmail }),
         }
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API Error Response:', errorData);
-        throw new Error(`Failed to ${status.toLowerCase()} registration request`);
+        const errorMessage = await response.text();
+        throw new Error(`Failed to ${status.toLowerCase()} registration request: ${errorMessage}`);
       }
 
+      // Notify based on status
+      if (status === 'Approved') {
+        const adminEmails = await getAdminEmails();
+        adminEmails.forEach((adminEmail) => {
+          sendNotification(
+            adminEmail,
+            email,
+            'Approval',
+            `Supervisor approved a registration request for ${firstName} ${lastName} in the course ${courseName}.`
+          );
+        });
+      } else {
+        sendNotification(
+          volunteerEmail,
+          email,
+          'Rejection',
+          `Your registration request for ${courseName} has been rejected by the supervisor.`
+        );
+      }
+
+      // Update UI
       setRegistrationRequests((prevRequests) =>
         prevRequests.filter((request) => request.id !== requestId)
       );
       alert(`Registration request ${status.toLowerCase()} successfully.`);
     } catch (error) {
-      console.error('Error processing registration request:', error);
-      alert('An error occurred. Please try again.');
+      console.error(`Error processing registration request:`, error);
+      alert(`An error occurred: ${error.message}`);
     }
   };
 
@@ -115,13 +158,6 @@ const Requests = () => {
     }
   };
 
-  // Format date for display
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const options = { month: 'long', day: 'numeric', year: 'numeric' };
-    return date.toLocaleDateString('en-US', options);
-  };
-
   if (loading) return <p>Loading requests...</p>;
 
   return (
@@ -136,33 +172,34 @@ const Requests = () => {
         <ul className="requests-list">
           {registrationRequests.map((request) => (
             <li key={request.id} className="request-item">
-              <p>
-                <strong>Volunteer Name:</strong> {request.first_name} {request.last_name}
-              </p>
-              <p>
-                <strong>Course:</strong> {request.course_name}
-              </p>
-              <p>
-                <strong>Semester:</strong> {request.semester} {request.year}
-              </p>
-              <p>
-                <strong>Organization:</strong> {request.organization}
-              </p>
-              <p>
-                <strong>Status:</strong> {request.status}
-              </p>
-              <p>
-                <strong>Submitted On:</strong> {formatDate(request.created_at)}
-              </p>
+              <p><strong>Volunteer Name:</strong> {request.first_name} {request.last_name}</p>
+              <p><strong>Course:</strong> {request.course_name}</p>
+              <p><strong>Organization:</strong> {request.organization}</p>
+              <p><strong>Semester:</strong> {request.semester} {request.year}</p>
+              <p><strong>Status:</strong> {request.status}</p>
               <div className="actions">
                 <button
-                  onClick={() => handleRequestAction(request.id, 'Pending Admin Approval')}
+                  onClick={() => handleRegistrationRequestAction(
+                    request.id,
+                    'Approved',
+                    request.volunteer_email,
+                    request.first_name,
+                    request.last_name,
+                    request.course_name
+                  )}
                   className="approve-btn"
                 >
                   Approve
                 </button>
                 <button
-                  onClick={() => handleRequestAction(request.id, 'Rejected')}
+                  onClick={() => handleRegistrationRequestAction(
+                    request.id,
+                    'Rejected',
+                    request.volunteer_email,
+                    request.first_name,
+                    request.last_name,
+                    request.course_name
+                  )}
                   className="reject-btn"
                 >
                   Reject
@@ -181,27 +218,11 @@ const Requests = () => {
         <ul className="requests-list">
           {hoursRequests.map((request) => (
             <li key={request.id} className="request-item">
-              <p>
-                <strong>Volunteer Name:</strong> {request.first_name} {request.last_name}
-              </p>
-              <p>
-                <strong>Class:</strong> {request.class_name}
-              </p>
-              <p>
-                <strong>Date:</strong> {formatDate(request.date)}
-              </p>
-              <p>
-                <strong>Time:</strong> {formatTime(request.from_time)} - {formatTime(request.to_time)}
-              </p>
-              <p>
-                <strong>Hours:</strong> {request.hours}
-              </p>
-              <p>
-                <strong>Activity:</strong> {request.activity}
-              </p>
-              <p>
-                <strong>Status:</strong> {request.status}
-              </p>
+              <p><strong>Volunteer Name:</strong> {request.volunteer_first_name} {request.volunteer_last_name}</p>
+              <p><strong>Class:</strong> {request.class_name}</p>
+              <p><strong>Date:</strong> {request.date}</p>
+              <p><strong>Hours:</strong> {request.hours}</p>
+              <p><strong>Status:</strong> {request.status}</p>
               <div className="actions">
                 <button
                   onClick={() => handleHoursRequestAction(request.id, 'Approved')}

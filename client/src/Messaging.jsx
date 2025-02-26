@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { FaSearch } from 'react-icons/fa';
 import './Messaging.css';
 
 const Messaging = () => {
-  const [user, setUser] = useState(null); // Logged-in user's data
-  const [messages, setMessages] = useState([]); // Messages between users
-  const [newMessage, setNewMessage] = useState(''); // New message input
-  const [users, setUsers] = useState([]); // List of supervisors/volunteers
-  const [receiverEmail, setReceiverEmail] = useState(''); // Selected receiver email
-  const [loading, setLoading] = useState(true); // Loading state
+  const [user, setUser] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [receiver, setReceiver] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const getInitials = (firstName, lastName) => {
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+  };
 
   // Fetch logged-in user's data
   useEffect(() => {
@@ -33,55 +40,45 @@ const Messaging = () => {
     fetchLoggedInUser();
   }, []);
 
-  // Fetch list of users to message
+  // Fetch list of users excluding the logged-in user
   useEffect(() => {
     if (!user) return;
 
     const fetchUsers = async () => {
       try {
-        let data = [];
+        const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/users/${user.email}`);
+        if (!response.ok) throw new Error('Failed to fetch users');
+        const data = await response.json();
 
-        if (user.role === 'Supervisor') {
-          const [volunteers, admins] = await Promise.all([
-            fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisor/volunteers/${user.email}`).then((res) =>
-              res.json()
-            ),
-            fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/admins`).then((res) => res.json()),
-          ]);
-          data = [...volunteers, ...admins];
-        } else if (user.role === 'Volunteer') {
-          const [supervisors, admins] = await Promise.all([
-            fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisors/by-volunteer/${user.email}`).then((res) =>
-              res.json()
-            ),
-            fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/admins`).then((res) => res.json()),
-          ]);
-          data = [...supervisors, ...admins];
-        } else if (user.role === 'Admin') {
-          const [volunteers, supervisors, admins] = await Promise.all([
-            fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/volunteers`).then((res) => res.json()),
-            fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisors`).then((res) => res.json()),
-            fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/admins`).then((res) => res.json()),
-          ]);
-          data = [...volunteers, ...supervisors, ...admins];
-        }
-
-        setUsers(data);
+        // Filter out the logged-in user from the list
+        const filteredData = data.filter(u => u.email !== user.email);
+        setUsers(filteredData);
+        setFilteredUsers(filteredData);
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error('Error fetching users:', error.message);
       }
     };
 
     fetchUsers();
   }, [user]);
 
-  // Fetch messages between the sender and receiver
+  // Filter users based on search term
   useEffect(() => {
-    if (!receiverEmail || !user) return;
+    const filtered = users.filter((u) =>
+      `${u.first_name} ${u.last_name}`.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredUsers(filtered);
+  }, [searchTerm, users]);
+
+  // Fetch messages between sender and receiver
+  useEffect(() => {
+    if (!receiver || !user) return;
 
     const fetchMessages = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/messages/${user.email}/${receiverEmail}`);
+        const response = await fetch(
+          `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/messages/${user.email}/${receiver.email}`
+        );
         const data = await response.json();
         setMessages(data);
       } catch (error) {
@@ -90,26 +87,28 @@ const Messaging = () => {
     };
 
     fetchMessages();
-  }, [receiverEmail, user]);
+  }, [receiver, user]);
 
-  // Handle sending a new message and notification
+  // Handle sending a new message
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user || !receiverEmail) {
+    if (!newMessage.trim() || !user || !receiver?.email) {
       console.error('Invalid message or user/receiver data');
       return;
     }
 
     try {
-      // Send message
       const messageResponse = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sender_email: user.email, receiver_email: receiverEmail, message: newMessage }),
+        body: JSON.stringify({
+          sender_email: user.email,
+          receiver_email: receiver.email,
+          message: newMessage,
+        }),
       });
 
       if (!messageResponse.ok) {
-        const errorData = await messageResponse.json();
-        throw new Error(errorData.message || 'Failed to send message');
+        throw new Error('Failed to send message');
       }
 
       const savedMessage = await messageResponse.json();
@@ -118,87 +117,95 @@ const Messaging = () => {
         {
           id: savedMessage.id,
           sender_email: user.email,
-          receiver_email: receiverEmail,
+          receiver_email: receiver.email,
           message: newMessage,
           created_at: new Date().toISOString(),
         },
       ]);
       setNewMessage('');
-
-      // Send notification
-      const notificationResponse = await fetch(`${process.env.REACT_APP_MYSQL_SERVER_URL}/api/notifications`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          receiver_email: receiverEmail,
-          sender_email: user.email,
-          notification_type: 'Message',
-          message: `You have received a new message from ${user.first_name} ${user.last_name}`,
-        }),
-      });
-
-      if (!notificationResponse.ok) {
-        const errorData = await notificationResponse.json();
-        console.error('Failed to send notification:', errorData.message);
-      }
     } catch (error) {
-      console.error('Error sending message or notification:', error.message);
+      console.error('Error sending message:', error.message);
     }
   };
 
-  if (loading) {
-    return <p>Loading...</p>;
-  }
+  if (loading) return <p>Loading...</p>;
 
   return (
     <div className="messaging-container">
-      <h2>Messaging</h2>
-      {!receiverEmail ? (
-        <div className="user-selection">
-          <h3>
-            Select a {user?.role === 'Volunteer' ? 'Supervisor' : user?.role === 'Supervisor' ? 'Volunteer' : 'User'} to Message
-          </h3>
-          <ul>
-            {users.map((user, index) => (
-              <li key={user.email || user.supervisor_email || index}>
-                <button onClick={() => setReceiverEmail(user.email || user.supervisor_email)}>
-                  {user.first_name || user.supervisor_first_name || 'No Name'} {user.last_name || user.supervisor_last_name || ''} (
-                  {user.email || user.supervisor_email || 'No Email'})
-                </button>
-              </li>
-            ))}
-          </ul>
+      <div className="contacts-sidebar">
+        <h2>Contacts</h2>
+
+        <div className="search-bar">
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <FaSearch className="search-icon" />
         </div>
-      ) : (
-        <>
-          <div className="messages-list">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`message-item ${msg.sender_email === user.email ? 'sent' : 'received'}`}
-                style={{
-                  alignSelf: msg.sender_email === user.email ? 'flex-end' : 'flex-start',
-                }}
-              >
-                <p>{msg.message}</p>
-                <small>{new Date(msg.created_at).toLocaleString()}</small>
+
+        <ul className="user-list">
+          {filteredUsers.map((u) => (
+            <li
+              key={u.email}
+              className="user-list-item"
+              onClick={() => setReceiver(u)}
+            >
+              <div className="profile-avatar">{getInitials(u.first_name, u.last_name)}</div>
+              <div className="user-info">
+                <span className="user-name">
+                  {u.first_name} {u.last_name} ({u.organization_name} {u.role})
+                </span>
               </div>
-            ))}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="messaging-panel">
+        {receiver ? (
+          <>
+            <div className="conversation-header">
+              <h2>Conversation with {receiver.first_name} {receiver.last_name}</h2>
+              <button className="back-button" onClick={() => setReceiver(null)}>Back</button>
+            </div>
+
+            <div className="messages-list">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`message-item-container ${msg.sender_email === user.email ? 'sent' : 'received'}`}
+                >
+                  {msg.sender_email !== user.email && (
+                    <div className="profile-avatar">
+                      {getInitials(receiver.first_name, receiver.last_name)}
+                    </div>
+                  )}
+                  <div className={`message-item ${msg.sender_email === user.email ? 'sent' : 'received'}`}>
+                    <p>{msg.message}</p>
+                    <small>{new Date(msg.created_at).toLocaleString()}</small>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="message-input">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+              />
+              <button onClick={handleSendMessage}>Send</button>
+            </div>
+          </>
+        ) : (
+          <div className="empty-message-panel">
+            <p>Select a contact to start a conversation</p>
           </div>
-          <div className="message-input">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type a message..."
-            />
-            <button onClick={handleSendMessage}>Send</button>
-          </div>
-          <button className="back-button" onClick={() => setReceiverEmail('')}>
-            Back to User List
-          </button>
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 };

@@ -27,6 +27,13 @@ const Registration = () => {
   const [isPageValid, setIsPageValid] = useState(false); // Validation for the current page
   const navigate = useNavigate(); // React Router navigation
 
+  useEffect(()=>{
+    const fetchUserData = async ()=>{
+        
+    }
+  }
+)
+
   // Fetch logged-in user data and prefill fields
   useEffect(() => {
     const fetchUserData = async () => {
@@ -121,6 +128,25 @@ const Registration = () => {
       if (!response.ok) {
         throw new Error("Failed to submit registration request.");
       }
+
+      // Send a notification to the supervisor
+      const notificationResponse = await fetch(
+        `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/notifications`,
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                receiver_email: formData.supervisorEmail,
+                sender_email: formData.personalEmail,
+                notification_type: "Request",
+                message: `A new request has been submitted by ${formData.firstName} ${formData.lastName} for the course ${formData.course}.`,
+            }),
+        }
+    );
+
+    if (!notificationResponse.ok) {
+        throw new Error("Failed to send notification to supervisor.");
+    }
   
       alert(
         "Your registration request has been submitted. It is pending approval from your supervisor."

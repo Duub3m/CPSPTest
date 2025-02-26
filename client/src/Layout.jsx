@@ -1,14 +1,33 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom'; // To render child routes
-import Navbar from './Navbar'; // Import Navbar
+import React, { useContext } from 'react';
+import { Outlet } from 'react-router-dom';
+import Navbar from './Navbar';
+import TopNavbar from './TopNavbar';
+import { AuthContext } from './AuthContextProvider';
 
-const Layout = ({ role, handleLogout }) => {
+const Layout = () => {
+  const { role } = useContext(AuthContext);
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${process.env.REACT_APP_SERVER_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   return (
-    <div>
-      <Navbar role={role} handleLogout={handleLogout} />
-      <main className="main-content">
-        <Outlet /> {/* Placeholder */}
-      </main>
+    <div className="layout">
+      <TopNavbar />
+      <div className="layout-content">
+        <Navbar role={role} handleLogout={handleLogout} />
+        <div className="main-content">
+          <Outlet />
+        </div>
+      </div>
     </div>
   );
 };
