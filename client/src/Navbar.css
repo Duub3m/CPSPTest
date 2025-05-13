@@ -5,8 +5,8 @@
   left: 0;
   width: 60px;
   height: calc(100% - 60px);
-  background-color: #333;
-  color: #fff;
+  background-color: white; /* Change to white */
+  color: #333;  /* Dark text for visibility */
   padding: 1rem 0.5rem;
   display: flex;
   flex-direction: column;
@@ -14,6 +14,7 @@
   overflow-y: auto;
   transition: width 0.3s ease;
   z-index: 10;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Add subtle shadow for a better effect */
 }
 
 .navbar.expanded {
@@ -47,15 +48,16 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  color: #fff;
+  color: #333;  /* Dark text */
   text-decoration: none;
   border-radius: 6px;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Hover effect */
 .navbar ul li a:hover {
   background-color: #E5B340;
-  color: #000;
+  color: #fff; /* Text color changes on hover */
 }
 
 /* Main Content Shift */

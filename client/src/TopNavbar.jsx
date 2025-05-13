@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useContext } from "react";
 import { FaBars, FaBell } from "react-icons/fa";
 import "./TopNavbar.css";
-import MyInvolvementLogo from "./MyInvolvementLogo.jpg";
+import MyInvolvementLogo from "./MyInvolvementLogo.jpg"; // Your left logo
+import UAlbanyTest from "./UAlbanyTest.png"; // Centered logo
 import { AuthContext } from "./AuthContextProvider";
 
 const TopNavbar = () => {
@@ -97,11 +98,17 @@ const TopNavbar = () => {
     <>
       <nav className="top-navbar">
         <div className="top-navbar-left">
-          {/* Hamburger Menu (Unchanged) */}
+          {/* Hamburger Menu */}
           <button className="menu-button" onClick={toggleSidebar}>
             <FaBars size={24} />
           </button>
-          <img src={MyInvolvementLogo} alt="CPSP Logo" className="top-logo" />
+          {/* MyInvolvement Logo on the left */}
+          <img src={MyInvolvementLogo} alt="My Involvement Logo" className="left-logo" />
+        </div>
+
+        <div className="top-navbar-center">
+          {/* UAlbanyTest logo centered in the navbar */}
+          <img src={UAlbanyTest} alt="UAlbany Logo" className="center-logo" />
         </div>
 
         <div className="top-navbar-right">

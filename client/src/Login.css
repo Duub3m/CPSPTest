@@ -1,76 +1,105 @@
+/* Full Page Login Container */
 .login-page {
-    text-align: center;
-    padding-top: 40px;
-    font-family: Arial, sans-serif;
-    background: white;
-    height: 100vh;
-    color: #333;
-  }
-  
-  .hello-image {
-    width: 200px;
-    height: 200px;
-    object-fit: contain;
-    border-radius: 50%;
-    margin: 0 auto;
-    display: block;
-  }
-  
-  .ua-logo {
-    width: 300px;
-    margin: 20px auto 10px;
-    display: block;
-  }
-  
-  .login-box {
-    margin: 20px auto;
-    width: 280px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  .login-box input {
-    padding: 10px;
-    font-size: 14px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-  
-  .login-box button {
-    padding: 10px;
-    font-size: 16px;
-    background-color: #2b70c9;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .login-box button:hover {
-    background-color: #225a9c;
-  }
-  
-  .login-links {
-    margin-top: 20px;
-    font-size: 13px;
-  }
-  
-  .login-links a {
-    color: #2b70c9;
-    text-decoration: none;
-    margin: 0 4px;
-  }
-  
-  .login-links a:hover {
-    text-decoration: underline;
-  }
-  
-  .disclaimer {
-    margin: 20px auto;
-    max-width: 600px;
-    font-size: 11px;
-    color: #555;
-    line-height: 1.4;
-  }
-  
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Align everything to the top */
+  align-items: center; 
+  height: 100vh; 
+  width: 100vw;
+  background-color: white; /* Background color */
+  padding: 0 20px;
+  box-sizing: border-box;
+  text-align: center; /* Center the text */
+}
+
+/* "Hello" Text */
+.hello-text {
+  font-size: 48px; /* Larger size */
+  font-weight: bold;
+  color: #f4c542; /* Yellow color for "Hello" text */
+  margin-bottom: 20px; /* Space below the text */
+  display: block;
+}
+
+/* Logo and Hello Image */
+.hello-image {
+  width: 350px;
+  height: 250px;
+  object-fit: contain;
+  border-radius: 50%; /* Circular image */
+  margin-top: -50px; 
+  margin-bottom: 60px; 
+  display: block;
+}
+
+.ua-logo {
+  width: 250px;
+  margin: 0 auto 40px;
+  margin-top: -100px; 
+  display: block;
+}
+
+/* Login Form */
+.login-box {
+  width: 100%;
+  max-width: 400px; /* Max width for the form */
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  margin-top: -20px;
+}
+
+/* Input Fields */
+.login-box input {
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Submit Button */
+.login-box button {
+  padding: 12px;
+  font-size: 16px;
+  background-color: #2b70c9;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.login-box button:hover {
+  background-color: #225a9c;
+}
+
+/* Links */
+.login-links {
+  margin-top: 10px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.login-links a {
+  color: #2b70c9;
+  text-decoration: none;
+  margin: 0 4px;
+}
+
+.login-links a:hover {
+  text-decoration: underline;
+}
+
+/* Disclaimer */
+.disclaimer {
+  margin-top: 20px;
+  max-width: 600px;
+  font-size: 11px;
+  color: #555;
+  line-height: 1.4;
+  text-align: center;
+}

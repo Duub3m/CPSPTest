@@ -1,16 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Navbar.css';
-import cpspLogo from './cpsp.png';
-import { FaBell, FaSignOutAlt, FaUser } from 'react-icons/fa';
+import { FaBell, FaSignOutAlt, FaUser, FaTrophy } from 'react-icons/fa'; // Imported FaTrophy icon
 import { AuthContext } from './AuthContextProvider';
 
 const Navbar = ({ role, handleLogout }) => {
-  const { isSidebarOpen } = useContext(AuthContext);  // Use context state
+  const { isSidebarOpen } = useContext(AuthContext);
   const [pendingRequestCount, setPendingRequestCount] = useState(0);
   const [adminRequestCount, setAdminRequestCount] = useState(0);
   const [notificationCount, setNotificationCount] = useState(0);
-  
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -55,8 +53,6 @@ const Navbar = ({ role, handleLogout }) => {
 
   return (
     <div className={`navbar ${isSidebarOpen ? 'expanded' : 'collapsed'}`}>
-      
-
       <ul>
         <li>
           <Link to="/Profile2">
@@ -70,7 +66,7 @@ const Navbar = ({ role, handleLogout }) => {
             target="_blank"
             rel="noopener noreferrer"
           >
-            🏅 {isSidebarOpen && 'Volunteer Opportunities'}
+            <FaTrophy /> {isSidebarOpen && 'Volunteer Opportunities'} {/* Replaced emoji with FaTrophy */}
           </a>
         </li>
 
@@ -105,8 +101,6 @@ const Navbar = ({ role, handleLogout }) => {
             <FaBell /> {isSidebarOpen && 'Messaging'}
           </Link>
         </li>
-
-       
 
         <li>
           <button className="btn-logout" onClick={handleLogout}>
