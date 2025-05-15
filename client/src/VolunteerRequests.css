@@ -2,8 +2,10 @@
 .volunteer-requests-container {
   padding: 20px;
   margin-top: 60px; /* Ensure space for any fixed navbar */
-  overflow: auto; /* Allow scrolling */
-  max-height: calc(100vh - 120px); /* Prevent overflow on smaller screens */
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  max-height: calc(100vh - 120px);
   box-sizing: border-box;
 }
 
@@ -11,11 +13,14 @@
 .volunteer-requests-container h2 {
   font-size: 24px;
   margin-bottom: 20px;
-  color: #401967; /* Custom purple color */
+  color: #401967;
 }
 
-/* Requests List */
+/* Horizontal Flex Layout */
 .requests-list {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -27,8 +32,9 @@
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 15px;
-  margin-bottom: 10px;
+  min-width: 280px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
 }
 
 .request-item p {
@@ -54,9 +60,9 @@
   color: #ed182d;
 }
 
-/* Ensure overflow content is scrollable */
+/* Horizontal Scrollbar */
 .volunteer-requests-container::-webkit-scrollbar {
-  width: 8px;
+  height: 8px;
 }
 
 .volunteer-requests-container::-webkit-scrollbar-thumb {

@@ -101,12 +101,6 @@ const Navbar = ({ role, handleLogout }) => {
             <FaBell /> {isSidebarOpen && 'Messaging'}
           </Link>
         </li>
-
-        <li>
-          <button className="btn-logout" onClick={handleLogout}>
-            <FaSignOutAlt /> {isSidebarOpen && 'Logout'}
-          </button>
-        </li>
       </ul>
     </div>
   );

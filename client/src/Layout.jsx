@@ -21,7 +21,7 @@ const Layout = () => {
 
   return (
     <div className="layout">
-      <TopNavbar />
+      <TopNavbar handleLogout={handleLogout} />
       <div className="layout-content">
         <Navbar role={role} handleLogout={handleLogout} />
         <div className="main-content">

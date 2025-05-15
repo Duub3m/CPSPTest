@@ -1,129 +1,132 @@
+/* Container - clean, centered card layout */
 .log-of-hours-container {
-    width: 90%;
-    margin: 0 auto;
-    font-family: 'Roboto', Arial, sans-serif;
-    color: #333;
-    background-color: #fafafa;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-  }
-  
-  h1 {
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 2rem;
-    color: #401967; /* Matches the university's color theme */
-  }
-  
-  .class-selector {
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .class-selector label {
-    font-size: 1rem;
-    margin-bottom: 10px;
-    color: #555;
-  }
-  
-  .class-selector select {
-    font-size: 1rem;
-    padding: 8px 12px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #fff;
-    width: 200px;
-  }
-  
-  .class-info {
-    margin-bottom: 20px;
-    font-size: 1rem;
-    text-align: center;
-    color: #555;
-  }
-  
-  .logs-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    border-radius: 8px;
-  }
-  
-  .logs-table th,
-  .logs-table td {
-    border: 1px solid #ddd;
-    padding: 12px 16px;
-    text-align: center;
-  }
-  
-  .logs-table th {
-    background-color: #401967; /* University color theme */
-    color: #fff;
-    font-weight: 600;
-    font-size: 1rem;
-  }
-  
-  .logs-table tr:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-  
-  .logs-table tr:nth-child(odd) {
-    background-color: #fff;
-  }
-  
-  .logs-table tr:hover {
-    background-color: #f1f1f1;
-    cursor: pointer;
-  }
-  
-  .logs-table td {
-    font-size: 0.95rem;
-    color: #333;
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 40px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #1f2937;
+}
+
+/* Title */
+.log-of-hours-container h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 30px;
+  color: #401967; /* School theme color */
+  text-align: left;
+}
+
+/* Class selector block */
+.class-selector {
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.class-selector label {
+  font-size: 1rem;
+  margin-bottom: 6px;
+  color: #374151;
+}
+
+.class-selector select {
+  padding: 10px 14px;
+  font-size: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  color: #1f2937;
+  width: 100%;
+  max-width: 300px;
+  transition: border-color 0.2s ease;
+}
+
+.class-selector select:focus {
+  border-color: #401967;
+  outline: none;
+}
+
+/* Volunteer info text */
+.volunteer-info {
+  margin-bottom: 30px;
+  font-size: 1rem;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.volunteer-info p {
+  margin: 4px 0;
+}
+
+/* Table container */
+.logs-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+/* Table headers */
+.logs-table th {
+  background-color: #401967;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-align: left;
+  padding: 14px 16px;
+}
+
+/* Table rows */
+.logs-table td {
+  font-size: 0.95rem;
+  padding: 14px 16px;
+  color: #1f2937;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Alternate row background */
+.logs-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Hover effect */
+.logs-table tr:hover {
+  background-color: #f3f4f6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .log-of-hours-container {
+    padding: 24px;
   }
 
-  .volunteer-info {
-    margin-bottom: 20px;
-    font-size: 16px;
-    color: #333;
-    text-align: center;
+  .logs-table th,
+  .logs-table td {
+    padding: 10px;
+    font-size: 0.85rem;
   }
-  
-  .volunteer-info p {
-    margin: 5px 0;
+
+  .class-selector select {
+    max-width: 100%;
   }
-  
-  
-  @media (max-width: 768px) {
-    .logs-table th,
-    .logs-table td {
-      padding: 8px;
-      font-size: 0.85rem;
-    }
-  
-    .class-selector select {
-      width: 100%;
-      max-width: 300px;
-    }
+
+  .log-of-hours-container h1 {
+    font-size: 1.6rem;
   }
-  
-  @media (max-width: 480px) {
-    h1 {
-      font-size: 1.5rem;
-    }
-  
-    .logs-table th,
-    .logs-table td {
-      font-size: 0.8rem;
-    }
-  
-    .class-selector select {
-      width: 100%;
-      max-width: 250px;
-    }
+}
+
+@media (max-width: 480px) {
+  .logs-table th,
+  .logs-table td {
+    font-size: 0.8rem;
   }
-  
+
+  .log-of-hours-container h1 {
+    font-size: 1.4rem;
+  }
+}

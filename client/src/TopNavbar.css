@@ -315,3 +315,14 @@ body, html {
 .signout-button:hover {
   background-color: #c0392b;
 }
+
+.logout-item {
+  color: #ed182d;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.logout-item:hover {
+  background-color: #f8d7da;
+}

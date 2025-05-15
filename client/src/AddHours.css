@@ -1,63 +1,58 @@
-/* Main container for the Add Hours form */
+/* Main container */
 .add-hours-container {
+  max-width: 960px;
   margin: 40px auto;
-  padding: 20px;
-  max-width: 1000px;
-  font-family: Arial, sans-serif;
-  background-color: #fff;
+  padding: 40px;
+  background-color: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-  animation: fadeIn 0.5s ease-in-out;
+  border: 1px solid #e5e7eb;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  color: #1f2937;
 }
 
-/* Header style */
+/* Header */
 .add-hours-container h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
   margin-bottom: 30px;
-  text-align: center;
   color: #401967;
-  font-size: 36px;
-  font-weight: bold;
-  letter-spacing: 1px;
+  text-align: left;
 }
 
-/* Form layout */
+/* Form grid layout */
 .add-hours-form {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  padding: 0;
+  gap: 24px;
   width: 100%;
-  animation: slideUp 0.5s ease-in-out;
 }
 
-/* Full-width for text area and buttons */
+/* Ensure full row for these elements */
 .add-hours-form textarea,
 .add-hours-form button {
   grid-column: span 2;
 }
 
-/* Label style */
+/* Label styling */
 .add-hours-form label {
-  font-weight: bold;
-  margin-bottom: 5px;
-  color: #555;
+  font-size: 1rem;
+  color: #374151;
+  margin-bottom: 4px;
   display: block;
-  font-size: 16px;
-  letter-spacing: 0.5px;
 }
 
-/* Input and select style */
+/* Input/select/textarea base style */
 .add-hours-form input,
 .add-hours-form select,
 .add-hours-form textarea {
   width: 100%;
-  padding: 12px;
-  border: 1px solid #ccc;
+  padding: 12px 14px;
+  font-size: 1rem;
+  color: #1f2937;
+  background-color: #f9fafb;
+  border: 1px solid #d1d5db;
   border-radius: 8px;
-  font-size: 16px;
-  background-color: #f9f9f9;
-  transition: all 0.3s ease;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.2s ease;
 }
 
 .add-hours-form input:focus,
@@ -65,36 +60,65 @@
 .add-hours-form textarea:focus {
   outline: none;
   border-color: #401967;
-  background-color: #fff;
-  box-shadow: 0 0 5px rgba(64, 25, 103, 0.5);
+  background-color: #ffffff;
 }
 
-/* Button style */
+/* Button styling */
 .add-hours-form button {
   background-color: #401967;
-  color: white;
-  font-size: 18px;
+  color: #ffffff;
+  font-size: 1rem;
   padding: 12px 20px;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .add-hours-form button:hover {
   background-color: #E5B340;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(229, 179, 64, 0.4);
+  color: #000;
+  transform: translateY(-1px);
 }
 
 .add-hours-form button:active {
-  transform: translateY(1px);
-  box-shadow: none;
+  transform: translateY(0px);
 }
 
-/* Responsive adjustments for mobile */
+/* Success and error messages */
+.success-message,
+.error-message {
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.success-message {
+  background-color: #e6f4ea;
+  color: #256029;
+  border: 1px solid #b7dec4;
+}
+
+.error-message {
+  background-color: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+/* Each form field */
+.add-hours-form div {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
+  .add-hours-container {
+    padding: 24px;
+  }
+
   .add-hours-form {
     grid-template-columns: 1fr;
   }
@@ -103,60 +127,4 @@
   .add-hours-form button {
     grid-column: span 1;
   }
-
-  .add-hours-container {
-    padding: 10px;
-    box-shadow: none;
-  }
-
-  .add-hours-form input,
-  .add-hours-form select,
-  .add-hours-form textarea {
-    font-size: 14px;
-    padding: 10px;
-  }
-
-  .add-hours-form button {
-    font-size: 16px;
-    padding: 10px;
-  }
-}
-
-/* Form field spacing */
-.add-hours-form div {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Success and error messages */
-.success-message {
-  padding: 10px;
-  background-color: #d4edda;
-  color: #155724;
-  border-radius: 8px;
-  text-align: center;
-  margin-top: 10px;
-  box-shadow: 0 0 5px rgba(0, 128, 0, 0.3);
-}
-
-.error-message {
-  padding: 10px;
-  background-color: #f8d7da;
-  color: #721c24;
-  border-radius: 8px;
-  text-align: center;
-  margin-top: 10px;
-  box-shadow: 0 0 5px rgba(255, 0, 0, 0.3);
-}
-
-/* Animated focus effect */
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
 }

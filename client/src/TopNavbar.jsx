@@ -5,7 +5,7 @@ import MyInvolvementLogo from "./MyInvolvementLogo.jpg"; // Your left logo
 import UAlbanyTest from "./UAlbanyTest.png"; // Centered logo
 import { AuthContext } from "./AuthContextProvider";
 
-const TopNavbar = () => {
+const TopNavbar = ({ handleLogout }) => {
   const { toggleSidebar } = useContext(AuthContext);
   const [profilePicture, setProfilePicture] = useState("");
   const [notifications, setNotifications] = useState([]);
@@ -145,18 +145,20 @@ const TopNavbar = () => {
                     </div>
                     <p className="profile-name">Dubem Eneh</p>
                   </div>
+                
                   <ul className="profile-menu">
-                    <li>Paths</li>
-                    <li>Event History</li>
-                    <li>My Organizations</li>
-                    <li>Experiences</li>
-                    <li>Service Hours</li>
-                    <li>Involvement Record</li>
-                    <li>My Submissions</li>
-                    <li>My Downloads</li>
-                    <li>Send Feedback</li>
-                  </ul>
-                  <button className="signout-button">SIGN OUT</button>
+  <li>Paths</li>
+  <li>Event History</li>
+  <li>My Organizations</li>
+  <li>Experiences</li>
+  <li>Service Hours</li>
+  <li>Involvement Record</li>
+  <li>My Submissions</li>
+  <li>My Downloads</li>
+  <li>Send Feedback</li>
+  <li onClick={handleLogout} className="logout-item">Logout</li> {/* 🔁 New logout item */}
+</ul>
+
                 </div>
               </>
             )}
