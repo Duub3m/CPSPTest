@@ -37,3 +37,22 @@ Frontend:
 React: For user interface and component-driven architecture.
 Chart.js: Graphs for visualizing volunteer progress.
 HTML/CSS: For styling and layout.
+
+# Community Service Management Platform
+
+This platform enables students to log community service hours, supervisors to verify them, and administrators to oversee and report submissions. Built with React for the frontend and SQL for the backend, the platform is deployed on Google Cloud Platform.
+
+---
+
+## 🚀 Getting Started
+
+### 1. Start the Development Server
+
+To run the application locally, follow these steps:
+
+```bash
+cd client       # Navigate to the React client directory
+npm run build   # Builds the production-ready React app
+npm start       # Launches the development server
+
+
