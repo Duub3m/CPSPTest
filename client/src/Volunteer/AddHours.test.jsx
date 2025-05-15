@@ -38,7 +38,6 @@ test("renders and accepts input in all fields", async () => {
   await waitFor(() =>
     expect(screen.getByText(/Submit Hours Request/i)).toBeInTheDocument()
   );
-
   // Select class
   fireEvent.change(screen.getByRole("combobox"), {
     target: { value: "RSSW190" },

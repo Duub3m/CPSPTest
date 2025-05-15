@@ -71,7 +71,6 @@ test("loads messaging UI and sends a message", async () => {
       <Messaging />
     </MemoryRouter>
   );
-
   // Wait for Contacts to render
   await waitFor(() => expect(screen.getByText(/Contacts/i)).toBeInTheDocument());
   await waitFor(() => expect(screen.getByText(/Other Person/i)).toBeInTheDocument());

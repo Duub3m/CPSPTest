@@ -23,7 +23,6 @@ describe("Volunteer Registration Form", () => {
     fireEvent.change(ethnicitySelect, {
       target: { value: "Asian or Pacific Islander" },
     });
-
     fireEvent.click(screen.getByRole("button", { name: /Next/i }));
 
     // PAGE 2: Contact Information
