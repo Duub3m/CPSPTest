@@ -128,7 +128,7 @@ const AddHours = () => {
         const result = await response.json();
         alert(result.message);
         setFormData({ date: '', from: '', to: '', activity: '', class_name: '' });
-        navigate('/profile');
+        navigate('/profile2');
       } catch (error) {
         console.error('Error submitting hours request:', error);
         alert('An error occurred while submitting the request. Please try again.');

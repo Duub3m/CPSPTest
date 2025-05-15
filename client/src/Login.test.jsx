@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import Login from './Login';
 
+
 // Mock image imports to avoid import errors
 jest.mock('./assets/images/Single_Sign_On_Login_Hello.jpg', () => 'hello.jpg');
 jest.mock('./assets/images/UA_logo3.gif', () => 'ua-logo.gif');

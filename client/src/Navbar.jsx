@@ -77,6 +77,7 @@ const Navbar = ({ role, handleLogout }) => {
             <li><Link to="/Volunteer/Requests">📑 {isSidebarOpen && 'Requests'}</Link></li>
             <li><Link to="/Volunteer/SupervisorList">📝 {isSidebarOpen && 'Supervisor List'}</Link></li>
             <li><Link to="/Volunteer/Registration">📝 {isSidebarOpen && 'Registration'}</Link></li>
+            <li><Link to="/Volunteer/LogOfHours">📝 {isSidebarOpen && 'LogOfHours'}</Link></li>
           </>
         )}
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import "../Requests.css";
+import "../AdminRequests.css";
 
 const Requests = () => {
   const [requests, setRequests] = useState([]);

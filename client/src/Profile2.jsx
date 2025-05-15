@@ -3,8 +3,8 @@ import './Profile2.css';
 import { AuthContext } from './AuthContextProvider';
 
 const Profile2 = () => {
-  const { user, role } = useContext(AuthContext); // Get basic user info from context
-  const [profilePicture, setProfilePicture] = useState(''); // State for profile picture
+  const { user, role } = useContext(AuthContext);
+  const [profilePicture, setProfilePicture] = useState('');
   const [about, setAbout] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [courses, setCourses] = useState([]);
@@ -13,29 +13,49 @@ const Profile2 = () => {
   const [supervisor, setSupervisor] = useState('No supervisor assigned');
   const [selectedCourse, setSelectedCourse] = useState('');
 
-  // Fetch the profile picture directly from the backend
+  // Fetch the profile picture
   useEffect(() => {
     const fetchProfilePicture = async () => {
       try {
         const response = await fetch(`${process.env.REACT_APP_SERVER_URL}/auth/logged_in`, {
-          credentials: 'include', // Ensure cookies are sent
+          credentials: 'include',
         });
         const data = await response.json();
 
         if (data.loggedIn && data.user?.picture) {
           setProfilePicture(data.user.picture);
         } else {
-          setProfilePicture('https://example.com/default-profile.png'); // Fallback picture
+          setProfilePicture('https://example.com/default-profile.png');
         }
       } catch (error) {
         console.error('Error fetching profile picture:', error);
-        setProfilePicture('https://example.com/default-profile.png'); // Fallback picture
+        setProfilePicture('https://example.com/default-profile.png');
       }
     };
 
     fetchProfilePicture();
-  }, []); // Runs once on component mount
+  }, []);
 
+  // Fetch supervisor info
+  const fetchSupervisor = async (email, organization) => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_MYSQL_SERVER_URL}/api/supervisor-details/${email}/${organization}`
+      );
+      const data = await response.json();
+
+      if (response.ok && data) {
+        setSupervisor(`${data.first_name} ${data.last_name}`);
+      } else {
+        setSupervisor('No supervisor assigned');
+      }
+    } catch (error) {
+      console.error('Error fetching supervisor details:', error);
+      setSupervisor('Error fetching supervisor');
+    }
+  };
+
+  // Fetch user courses and logs
   useEffect(() => {
     const fetchData = async () => {
       if (role === 'Volunteer') {
@@ -50,9 +70,11 @@ const Profile2 = () => {
           setSelectedCourse(defaultCourse.class_name);
           setOrganization(defaultCourse.organization);
           fetchLogs(defaultCourse.class_name);
+          fetchSupervisor(user.email, defaultCourse.organization);
         }
       }
     };
+
     fetchData();
   }, [user.email, role]);
 
@@ -73,6 +95,7 @@ const Profile2 = () => {
     setSelectedCourse(selected.class_name);
     setOrganization(selected.organization);
     fetchLogs(selected.class_name);
+    fetchSupervisor(user.email, selected.organization);
   };
 
   const saveAboutMe = async () => {
@@ -90,12 +113,11 @@ const Profile2 = () => {
 
   return (
     <div>
-      {/* Profile Section */}
       <div className="profile-header">
         <div className="profile-image-wrapper">
           <img
             className="profile-image"
-            src={profilePicture} // Use the fetched profile picture
+            src={profilePicture}
             alt={`${user?.first_name || 'User'}'s profile`}
           />
         </div>
@@ -116,10 +138,8 @@ const Profile2 = () => {
         </div>
       </div>
 
-      {/* Cards Section */}
       <div className="profile-container">
         <div className="profile-bottom">
-          {/* Enrolled Courses Card */}
           {role === 'Volunteer' && (
             <div className="profile-card">
               <h2>Enrolled Courses</h2>
@@ -130,16 +150,11 @@ const Profile2 = () => {
                   </option>
                 ))}
               </select>
-              <p>
-                <i className="location-icon"></i> Organization: {organization}
-              </p>
-              <p>
-                <i className="job-icon"></i> Supervisor: {supervisor}
-              </p>
+              <p><i className="location-icon"></i> Organization: {organization}</p>
+              <p><i className="job-icon"></i> Supervisor: {supervisor}</p>
             </div>
           )}
 
-          {/* Total Approved Hours Card */}
           {role === 'Volunteer' && (
             <div className="profile-card">
               <h2>Total Approved Hours</h2>

@@ -86,5 +86,6 @@ test("loads messaging UI and sends a message", async () => {
 
   fireEvent.click(screen.getByText("Send"));
 
+  
   await waitFor(() => expect(screen.getByText("Hello!")).toBeInTheDocument());
 });

@@ -151,7 +151,7 @@ const Registration = () => {
       alert(
         "Your registration request has been submitted. It is pending approval from your supervisor."
       );
-      navigate("/Profile"); // Redirect to the Profile page
+      navigate("/profile2"); // Redirect to the Profile page
     } catch (error) {
       console.error("Error submitting registration request:", error);
       alert("An error occurred during registration. Please try again.");

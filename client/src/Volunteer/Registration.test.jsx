@@ -55,7 +55,7 @@ describe("Volunteer Registration Form", () => {
     fireEvent.change(textboxesPage4[0], { target: { value: "Albany Cares" } }); // Org
     fireEvent.change(textboxesPage4[1], { target: { value: "supervisor@org.com" } }); // Sup Email
 
-    // Confirm final submit is visible
+    // Confirm final submit is there
     expect(screen.getByRole("button", { name: /Submit/i })).toBeInTheDocument();
   });
 });
